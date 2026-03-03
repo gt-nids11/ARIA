@@ -1,6 +1,6 @@
 ﻿"use client";
 import { usePathname } from 'next/navigation';
-import { Bell, Search, UserCircle, Settings } from 'lucide-react';
+import { Bell, Search, UserCircle } from 'lucide-react';
 
 export default function Navbar() {
   const pathname = usePathname();

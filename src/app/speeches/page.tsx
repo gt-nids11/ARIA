@@ -109,7 +109,7 @@ export default function Speeches() {
                     <Sparkles className="w-8 h-8 text-blue-500/50" />
                   </div>
                   <h4 className="text-navy-300 font-bold mb-2">Awaiting Parameters</h4>
-                  <p className="text-navy-500 text-sm max-w-xs leading-relaxed">Fill out the speech criteria on the left and click "Generate" to instruct ARIA to draft the content.</p>
+                  <p className="text-navy-500 text-sm max-w-xs leading-relaxed">Fill out the speech criteria on the left and click &quot;Generate&quot; to instruct ARIA to draft the content.</p>
                 </div>
               )}
               

@@ -1,6 +1,6 @@
 ﻿"use client";
 import { useState } from 'react';
-import { AlertTriangle, Clock, Activity, CheckCircle, ShieldAlert } from 'lucide-react';
+import { Clock, Activity, CheckCircle, ShieldAlert } from 'lucide-react';
 
 export default function Alerts() {
   const [filter, setFilter] = useState('All');
