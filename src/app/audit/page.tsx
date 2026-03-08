@@ -11,7 +11,7 @@ export default function AuditLog() {
 
     const exportCSV = () => {
         const header = ['ID,User,Action,Module,Details,IP Address,Created At'];
-        const rows = logs.map(l => \`\${l.id},\${l.user_name},\${l.action},\${l.module},"\${l.details}",\${l.ip_address},\${l.created_at}\`);
+        const rows = logs.map(l => `${l.id},${l.user_name},${l.action},${l.module},"${l.details}",${l.ip_address},${l.created_at}`);
     const csvContent = header.concat(rows).join('\\n');
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -66,7 +66,7 @@ export default function AuditLog() {
 
               <div className="col-span-2 font-mono text-xs text-navy-400 pl-4 z-10 font-medium tracking-wider group-hover:text-blue-300 transition-colors uppercase">{new Date(log.created_at).toLocaleString()}</div>
               <div className="col-span-2 font-bold text-gray-200 z-10 flex items-center space-x-2">
-                <div className={\`w-2 h-2 rounded-full \${log.user_name.includes('Admin') ? 'bg-red-500/50' : 'bg-blue-500/50'}\`}></div>
+                <div className={`w-2 h-2 rounded-full ${log.user_name.includes('Admin') ? 'bg-red-500/50' : 'bg-blue-500/50'}`}></div>
                 <span>{log.user_name}</span>
               </div>
               <div className="col-span-3 text-navy-100 font-medium z-10">{log.action}</div>

@@ -17,7 +17,7 @@ export default function Scheduler() {
     const generateBriefing = async () => {
         setLoadingBrief(true);
         try {
-            const res = await fetch(\`/api/schedule/\${selectedEvent.id}/briefing\`);
+            const res = await fetch(`/api/schedule/${selectedEvent.id}/briefing`);
           const data = await res.json();
           setBriefing(data.briefing);
       } catch(e) {
@@ -47,7 +47,7 @@ export default function Scheduler() {
 
   return (
     <div className="flex h-full gap-6">
-      <div className={\`flex flex-col flex-1 h-full transition-all duration-300 \${selectedEvent ? 'w-2/3 pr-6 border-r border-navy-700/50' : 'w-full'}\`}>
+      <div className={`flex flex-col flex-1 h-full transition-all duration-300 ${selectedEvent ? 'w-2/3 pr-6 border-r border-navy-700/50' : 'w-full'}`}>
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-4">
             <h2 className="text-2xl font-bold text-white tracking-tight flex items-center">
@@ -75,12 +75,12 @@ export default function Scheduler() {
               <div 
                 key={i} 
                 onClick={() => { if(date.events.length) { setSelectedEvent(date.events[0]); setBriefing(''); } }}
-                className={\`min-h-[100px] border-b border-r border-navy-700/50 p-2 flex flex-col group transition-all
-                  \${!date.cur ? 'bg-navy-900/50' : 'bg-navy-800/20 hover:bg-navy-700/30 cursor-pointer'} 
-                  \${date.today ? 'ring-2 ring-inset ring-blue-500 bg-blue-500/5' : ''}
-                  \${i % 7 === 6 ? 'border-r-0' : ''}\`}>
-                <div className={\`text-right text-sm font-bold w-6 h-6 flex items-center justify-center rounded-full ml-auto mb-1 transition-colors
-                  \${date.today ? 'bg-blue-500 text-white shadow-md shadow-blue-500/50' : (!date.cur ? 'text-navy-600' : 'text-navy-300 group-hover:text-blue-400 group-hover:bg-navy-800')}\`}>
+                className={`min-h-[100px] border-b border-r border-navy-700/50 p-2 flex flex-col group transition-all
+                  ${!date.cur ? 'bg-navy-900/50' : 'bg-navy-800/20 hover:bg-navy-700/30 cursor-pointer'} 
+                  ${date.today ? 'ring-2 ring-inset ring-blue-500 bg-blue-500/5' : ''}
+                  ${i % 7 === 6 ? 'border-r-0' : ''}`}>
+                <div className={`text-right text-sm font-bold w-6 h-6 flex items-center justify-center rounded-full ml-auto mb-1 transition-colors
+                  ${date.today ? 'bg-blue-500 text-white shadow-md shadow-blue-500/50' : (!date.cur ? 'text-navy-600' : 'text-navy-300 group-hover:text-blue-400 group-hover:bg-navy-800')}`}>
                   {date.d}
                 </div>
                 <div className="flex-1 flex flex-col space-y-1.5 overflow-hidden px-1">

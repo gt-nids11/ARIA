@@ -31,7 +31,7 @@ export default function Documents() {
         <div className="flex h-full gap-6 relative overflow-hidden">
             <div className="flex-1 flex flex-col space-y-6 transition-all duration-500">
                 <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,.txt" onChange={handleUpload} />
-                <div onClick={() => !loading && fileInputRef.current?.click()} className={\`glass-card p-10 border-2 border-dashed border-navy-600 flex flex-col items-center justify-center bg-navy-800/20 \${!loading ? 'hover:bg-navy-800/40 cursor-pointer' : ''} transition-colors group\`}>
+                <div onClick={() => !loading && fileInputRef.current?.click()} className={`glass-card p-10 border-2 border-dashed border-navy-600 flex flex-col items-center justify-center bg-navy-800/20 ${!loading ? 'hover:bg-navy-800/40 cursor-pointer' : ''} transition-colors group`}>
                 <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     {loading ? <RefreshCcw className="w-8 h-8 text-blue-400 animate-spin" /> : <UploadCloud className="w-8 h-8 text-blue-400 group-hover:text-blue-300" />}
                 </div>

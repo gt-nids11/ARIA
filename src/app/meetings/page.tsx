@@ -31,7 +31,7 @@ export default function Meetings() {
 
     return (
         <div className="flex h-full gap-6">
-            <div className={\`flex flex-col space-y-6 transition-all duration-300 \${selectedMeeting ? 'w-1/3 border-r border-navy-700/50 pr-6' : 'w-full'}\`}>
+            <div className={`flex flex-col space-y-6 transition-all duration-300 ${selectedMeeting ? 'w-1/3 border-r border-navy-700/50 pr-6' : 'w-full'}`}>
             <div className="flex justify-between items-center bg-navy-800/50 p-6 rounded-xl border border-navy-700/50 shadow-inner">
                 <div className="flex items-center space-x-4">
                     <div className="w-12 h-12 bg-blue-600/20 text-blue-400 rounded-lg flex items-center justify-center border border-blue-500/30">
@@ -58,7 +58,7 @@ export default function Meetings() {
                     {meetings.map((meeting) => (
                         <div
                             key={meeting.id}
-                            className={\`p-4 rounded-xl cursor-pointer group transition-all border \${selectedMeeting?.id === meeting.id ? 'bg-navy-900/80 border-blue-500/50 scale-[0.98]' : 'bg-navy-800/80 border-navy-700 hover:border-blue-500/50 hover:bg-navy-700/80 shadow-sm'}\`}
+                            className={`p-4 rounded-xl cursor-pointer group transition-all border ${selectedMeeting?.id === meeting.id ? 'bg-navy-900/80 border-blue-500/50 scale-[0.98]' : 'bg-navy-800/80 border-navy-700 hover:border-blue-500/50 hover:bg-navy-700/80 shadow-sm'}`}
                     onClick={() => setSelectedMeeting(meeting)}
               >
                     <div className="flex justify-between items-start mb-3">
@@ -98,9 +98,9 @@ export default function Meetings() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={\`uppercase tracking-widest text-[11px] font-black pb-3 border-b-2 transition-all \${
+                className={`uppercase tracking-widest text-[11px] font-black pb-3 border-b-2 transition-all ${
                   activeTab === tab ? 'border-blue-500 text-blue-400 scale-105 transform origin-bottom' : 'border-transparent text-navy-400 hover:text-navy-200 hover:border-navy-500'
-                }\`}
+                }`}
               >
                 {tab}
               </button>

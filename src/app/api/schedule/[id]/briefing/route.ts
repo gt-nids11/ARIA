@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { addAuditLog } from '../data';
+import { addAuditLog } from '../../../../data';
 
-import { schedule } from '../../data';
-import { openai } from '../../../../lib/openai';
+import { schedule } from '../../../../data';
+import { openai } from '../../../../../../lib/openai';
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
     try {
-        const ev = schedule.find(x => x.id === params.id);
+        const ev = schedule.find((x: any) => x.id === params.id);
         if (!ev) throw new Error('Not found');
 
         addAuditLog('GENERATE_EVENT_BRIEF', 'Schedule', `Generated brief for event ${ev.title}`);
@@ -20,7 +20,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         });
 
         return NextResponse.json({ briefing: completion.choices[0].message.content });
-    } catch(e) {
+    } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }

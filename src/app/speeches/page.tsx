@@ -79,7 +79,7 @@ export default function Speeches() {
                                 <label className="block text-xs font-bold text-navy-300 uppercase tracking-wider mb-1.5">Tone</label>
                                 <div className="grid grid-cols-3 gap-2">
                                     {['Formal', 'Neutral', 'Inspiring'].map((tone) => (
-                                        <button key={tone} onClick={() => setFormData({ ...formData, tone })} className={\`p-2 border rounded-lg text-sm font-semibold transition-colors shadow-sm \${formData.tone === tone ? 'bg-blue-600 border-blue-500 text-white' : 'bg-navy-900 border-navy-600 text-navy-300 hover:text-white hover:border-navy-500'}\`}>
+                                        <button key={tone} onClick={() => setFormData({ ...formData, tone })} className={`p-2 border rounded-lg text-sm font-semibold transition-colors shadow-sm ${formData.tone === tone ? 'bg-blue-600 border-blue-500 text-white' : 'bg-navy-900 border-navy-600 text-navy-300 hover:text-white hover:border-navy-500'}`}>
                                     {tone}
                                 </button>
                   ))}
@@ -95,7 +95,7 @@ export default function Speeches() {
                     <button
                         onClick={generateDraft}
                         disabled={isGenerating}
-                        className={\`mt-6 w-full py-4 rounded-lg font-bold shadow-lg transition-all flex items-center justify-center text-white text-lg group \${isGenerating ? 'bg-blue-600/50 cursor-not-allowed border outline-none' : 'bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-600 hover:to-blue-400 hover:shadow-blue-500/25 border-t border-blue-400/30'}\`}>
+                        className={`mt-6 w-full py-4 rounded-lg font-bold shadow-lg transition-all flex items-center justify-center text-white text-lg group ${isGenerating ? 'bg-blue-600/50 cursor-not-allowed border outline-none' : 'bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-600 hover:to-blue-400 hover:shadow-blue-500/25 border-t border-blue-400/30'}`}>
                     {isGenerating ? (
                         <>
                             <RefreshCcw className="w-5 h-5 mr-3 animate-spin text-blue-200" /> Generating Intelligence Draft...

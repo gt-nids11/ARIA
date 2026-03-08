@@ -45,7 +45,7 @@ export default function Alerts() {
                 {visibleAlerts.map(alert => {
                     const color = alert.severity === 'high' ? 'red' : alert.severity === 'medium' ? 'yellow' : 'blue';
                     return (
-                        <div key={alert.id} className={`glass-card p-6 border-l-4 group transition-all duration-300 hover:shadow-lg ${alert.resolved ? 'opacity-50 grayscale hover:grayscale-0 border-l-emerald-500/30 bg-navy-900/40' : \`border-l-\${color}-500 hover:-translate-y-0.5 shadow-md\`
+                        <div key={alert.id} className={`glass-card p-6 border-l-4 group transition-all duration-300 hover:shadow-lg ${alert.resolved ? 'opacity-50 grayscale hover:grayscale-0 border-l-emerald-500/30 bg-navy-900/40' : `border-l-${color}-500 hover:-translate-y-0.5 shadow-md`
           }`}>
                 <div className="flex justify-between items-start">
                     <div className="flex items-start space-x-4 max-w-3xl">
@@ -57,7 +57,7 @@ export default function Alerts() {
                         <div>
                             <div className="flex items-center space-x-3 mb-2">
                                 <h4 className={`font-bold text-lg ${alert.resolved ? 'line-through text-navy-400' : 'text-white'}`}>{alert.title}</h4>
-                                <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded border ${alert.resolved ? 'border-navy-600 text-navy-500' : \`border-\${color}-500/30 text-\${color}-400 bg-\${color}-500/10\`
+                                <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded border ${alert.resolved ? 'border-navy-600 text-navy-500' : `border-${color}-500/30 text-${color}-400 bg-${color}-500/10`
                     }`}>{alert.severity}</span>
                         </div>
                         <p className={`text-sm leading-relaxed ${alert.resolved ? 'text-navy-500' : 'text-navy-200'}`}>{alert.description}</p>

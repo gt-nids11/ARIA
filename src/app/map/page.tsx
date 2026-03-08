@@ -75,8 +75,8 @@ export default function MapPage() {
                 const xPos = ((c.longitude - 77.2) / 0.05) * 80 + 10;
                 const yPos = ((c.latitude - 28.6) / 0.05) * 80 + 10;
                 return (
-                    <div key={c.id} onClick={() => setSelectedPin(c)} style={{ left: \`\${xPos}%\`, top: \`\${yPos}%\` }} className="absolute cursor-pointer group">
-                        <div className={\`w-4 h-4 rounded-full \${mapColor} shadow-lg shadow-black/50 border-2 border-white/20\`}></div>
+                    <div key={c.id} onClick={() => setSelectedPin(c)} style={{ left: `${xPos}%`, top: `${yPos}%` }} className="absolute cursor-pointer group">
+                        <div className={`w-4 h-4 rounded-full ${mapColor} shadow-lg shadow-black/50 border-2 border-white/20`}></div>
                         {selectedPin?.id === c.id && (
                              <div className="absolute bottom-8 -left-20 bg-navy-800 border border-navy-500 p-3 rounded-lg shadow-xl w-48 z-50">
                                  <h4 className="font-bold text-white text-sm">{c.title}</h4>
@@ -103,7 +103,7 @@ export default function MapPage() {
                 <div className="flex-1 overflow-y-auto space-y-4 pt-2">
                     {(clusters as any[]).map((cluster, i) => (
               <div key={i} className="bg-navy-900/60 p-4 flex flex-col relative overflow-hidden rounded-xl border border-navy-700/50 transition-colors cursor-pointer hover:-translate-y-0.5 shadow-sm">
-                <div className={\`absolute top-0 right-0 p-3 bg-\${cluster.color}-500/10 text-\${cluster.color}-400 text-center border-b border-l border-\${cluster.color}-500/30 font-bold text-[10px] uppercase tracking-wider rounded-bl-lg shrink-0 w-12\`}>
+                <div className={`absolute top-0 right-0 p-3 bg-${cluster.color}-500/10 text-${cluster.color}-400 text-center border-b border-l border-${cluster.color}-500/30 font-bold text-[10px] uppercase tracking-wider rounded-bl-lg shrink-0 w-12`}>
                   {cluster.days}d<br/>Old
                 </div>
                 <div className="w-[calc(100%-2rem)]">
