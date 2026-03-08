@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { addAuditLog } from '../../../../data';
 
 import { schedule } from '../../../../data';
-import { openai } from '../../../../../../lib/openai';
+import { openai } from '../../../../../lib/openai';
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
     try {
