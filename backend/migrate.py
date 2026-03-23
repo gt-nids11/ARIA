@@ -1,4 +1,14 @@
 import os
+
+req_path = 'requirements.txt'
+with open(req_path, 'r') as f:
+    text = f.read()
+text = text.replace('sqlalchemy\n', 'motor\n')
+text = text.replace('psycopg2-binary\n', '')
+with open(req_path, 'w') as f:
+    f.write(text)
+
+db_content = '''import os
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
@@ -32,3 +42,8 @@ def fix_id(doc):
 
 def fix_ids(docs):
     return [fix_id(doc) for doc in docs]
+'''
+with open('database.py', 'w') as f:
+    f.write(db_content)
+
+print("Started migration...")

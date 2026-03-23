@@ -1,15 +1,13 @@
-﻿from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-from . import models, schemas, auth, database
+from . import schemas, auth, database
 from datetime import timedelta
 from fastapi.security import OAuth2PasswordRequestForm
 import os
+import datetime
 
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from .routers import documents, meetings, speeches, complaints, alerts, schedule, dashboard, audit
-
-models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="ARIA API")
 
@@ -20,6 +18,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+scheduler = AsyncIOScheduler()
+
+@app.on_event("startup")
+async def startup_db_client():
+    database.connect_db()
+    scheduler.start()
+
+@app.on_event("shutdown")
+async def shutdown_db_client():
+    database.close_db()
 
 # Include Routers
 app.include_router(documents.router, prefix="/documents", tags=["documents"])
@@ -32,45 +41,54 @@ app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 app.include_router(audit.router, prefix="/audit", tags=["audit"])
 
 @app.post("/auth/register", response_model=schemas.UserResponse)
-def register(user: schemas.UserCreate, db: Session = Depends(database.get_db), req: Request = None):
-    db_user = db.query(models.User).filter(models.User.email == user.email).first()
+async def register(user: schemas.UserCreate, db = Depends(database.get_db), req: Request = None):
+    db_user = await db["users"].find_one({"email": user.email})
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    hashed_password = auth.get_password_hash(user.password)
-    new_user = models.User(name=user.name, email=user.email, hashed_password=hashed_password, role=user.role)
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    auth.log_api_action(db, new_user, "System Registration", "Authentication", f"User {user.email} registered", req)
+    
+    new_user = {
+        "name": user.name,
+        "email": user.email,
+        "hashed_password": auth.get_password_hash(user.password),
+        "role": user.role,
+        "created_at": datetime.datetime.utcnow()
+    }
+    res = await db["users"].insert_one(new_user)
+    new_user["_id"] = res.inserted_id
+    new_user = database.fix_id(new_user)
+    
+    await auth.log_api_action(db, new_user, "System Registration", "Authentication", f"User {user.email} registered", req)
     return new_user
 
 @app.post("/auth/login", response_model=schemas.Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db), req: Request = None):
-    user = db.query(models.User).filter(models.User.email == form_data.username).first()
-    if not user or not auth.verify_password(form_data.password, user.hashed_password):
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db = Depends(database.get_db), req: Request = None):
+    user = await db["users"].find_one({"email": form_data.username})
+    if not user or not auth.verify_password(form_data.password, user.get("hashed_password")):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     
+    user = database.fix_id(user)
     access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = auth.create_access_token(
-        data={"sub": user.email, "role": user.role, "name": user.name},
+        data={"sub": user.get("email"), "role": user.get("role"), "name": user.get("name")},
         expires_delta=access_token_expires
     )
-    auth.log_api_action(db, user, "System Login", "Authentication", f"User {user.email} logged in", req)
-    return {"access_token": access_token, "token_type": "bearer", "name": user.name, "role": user.role}
+    await auth.log_api_action(db, user, "System Login", "Authentication", f"User {user['email']} logged in", req)
+    return {"access_token": access_token, "token_type": "bearer", "name": user["name"], "role": user.get("role")}
 
-# APScheduler Background Job setup for Alerts triggering
-def check_for_alerts():
-    db = database.SessionLocal()
-    from datetime import datetime, timezone
-    now = datetime.now(timezone.utc)
-    # Check High alerts for 72hr open complaints
-    old_complaints = db.query(models.Complaint).filter(models.Complaint.status == "open").all()
-    for c in old_complaints:
-        if c.created_at and (now - c.created_at).total_seconds() > 72 * 3600:
-            db.add(models.Alert(title=f"Unresolved Complaint: {c.title}", description=f"Complaint open >72 hr in {c.ward}", severity="high"))
-    db.commit()
-    db.close()
+async def check_for_alerts():
+    db = database.db_state.db
+    if not db: return
+    now = datetime.datetime.utcnow()
+    cursor = db["complaints"].find({"status": "open"})
+    async for c in cursor:
+        created_at = c.get("created_at")
+        if created_at and (now - created_at).total_seconds() > 72 * 3600:
+            await db["alerts"].insert_one({
+                "title": f"Unresolved Complaint: {c.get('title')}",
+                "description": f"Complaint open >72 hr in {c.get('ward')}",
+                "severity": "high",
+                "resolved": False,
+                "created_at": datetime.datetime.utcnow()
+            })
 
-scheduler = BackgroundScheduler()
 scheduler.add_job(check_for_alerts, 'interval', hours=6)
-scheduler.start()

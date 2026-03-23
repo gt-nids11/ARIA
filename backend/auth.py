@@ -1,12 +1,12 @@
-﻿from datetime import datetime, timedelta
+from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
+from bson import ObjectId
 import os
-from . import models, database
+from . import schemas, database
 
 SECRET_KEY = os.getenv("SECRET_KEY", "b336df8398e1fdb702b8014528c1eaab7f1c1f516a2d1e03c6225b2f29399126")
 ALGORITHM = "HS256"
@@ -28,10 +28,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
+async def get_current_user(token: str = Depends(oauth2_scheme), db = Depends(database.get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -44,27 +43,28 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    user = db.query(models.User).filter(models.User.email == email).first()
+    user = await db["users"].find_one({"email": email})
     if user is None:
         raise credentials_exception
-    return user
+    return database.fix_id(user)
 
 def role_required(allowed_roles: list[str]):
-    def role_checker(current_user: models.User = Depends(get_current_user)):
-        if current_user.role not in allowed_roles and current_user.role != "admin": # Admin always access
+    def role_checker(current_user: dict = Depends(get_current_user)):
+        if current_user.get("role") not in allowed_roles and current_user.get("role") != "admin":
             raise HTTPException(status_code=403, detail="Not enough permissions")
         return current_user
     return role_checker
 
-def log_api_action(db: Session, user: models.User, action: str, module: str, details: str, request=None):
-    ip_address = request.client.host if request else "Unknown"
-    log = models.AuditLog(
-        user_id=user.id,
-        user_name=user.name,
-        action=action,
-        module=module,
-        details=details,
-        ip_address=ip_address
-    )
-    db.add(log)
-    db.commit()
+async def log_api_action(db, user: dict, action: str, module: str, details: str, request=None):
+    ip_address = request.client.host if getattr(request, 'client', None) else "Unknown"
+    # Simple struct for mongo
+    log = {
+        "user_id": user.get("id", str(user.get("_id", ""))),
+        "user_name": user.get("name"),
+        "action": action,
+        "module": module,
+        "details": details,
+        "ip_address": ip_address,
+        "created_at": datetime.utcnow()
+    }
+    await db["audit_logs"].insert_one(log)
