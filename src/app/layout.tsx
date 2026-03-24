@@ -4,6 +4,7 @@ import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
 import { AuthProvider } from "@/components/AuthContext";
+import { AuthProvider } from "@/components/AuthContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 

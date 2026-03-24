@@ -5,6 +5,8 @@ import { useAuth } from './AuthContext';
 import { useState } from 'react';
 
 export default function Navbar() {
+  const { currentOfficial, officials, setCurrentOfficial } = useAuth();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const pathname = usePathname();
   const { currentOfficial, officials, setCurrentOfficial } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);

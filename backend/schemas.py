@@ -11,7 +11,7 @@ class UserCreate(UserBase):
     password: str
 
 class UserResponse(UserBase):
-       id: str
+    id: str
     created_at: datetime
     class Config:
         from_attributes = True
@@ -27,7 +27,7 @@ class TokenData(BaseModel):
     role: Optional[str] = None
 
 class DocumentOut(BaseModel):
-       id: str
+    id: str
     filename: str
     summary: Optional[str] = None
     key_decisions: Optional[Any] = None
@@ -39,7 +39,7 @@ class DocumentOut(BaseModel):
         from_attributes = True
 
 class MeetingOut(BaseModel):
-       id: str
+    id: str
     title: str
     summary: Optional[str] = None
     key_decisions: Optional[Any] = None
@@ -58,7 +58,7 @@ class ComplaintCreate(BaseModel):
     longitude: float
 
 class ComplaintOut(ComplaintCreate):
-       id: str
+    id: str
     status: str
     priority: Optional[str] = None
     created_at: datetime
@@ -66,7 +66,7 @@ class ComplaintOut(ComplaintCreate):
         from_attributes = True
 
 class AlertOut(BaseModel):
-       id: str
+    id: str
     title: str
     description: str
     severity: str
@@ -86,14 +86,14 @@ class ScheduleEventCreate(BaseModel):
     linked_document_id: Optional[int] = None
 
 class ScheduleEventOut(ScheduleEventCreate):
-       id: str
+    id: str
     briefing: Optional[str] = None
     created_at: datetime
     class Config:
         from_attributes = True
 
 class AuditLogOut(BaseModel):
-       id: str
+    id: str
     user_name: str
     action: str
     module: str

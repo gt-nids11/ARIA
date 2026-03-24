@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { dashboard, alerts } from "../lib/api";
 
 export default function Dashboard() {
+  const { currentOfficial } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [stats, setStats] = useState({ pending_alerts: 0, todays_meetings: 0, open_complaints: 0, drafts_saved: 0 });
   const [brief, setBrief] = useState("Loading intelligence...");
   const [activeAlerts, setActiveAlerts] = useState<any[]>([]);
