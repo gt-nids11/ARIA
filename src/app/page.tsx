@@ -1,6 +1,7 @@
 "use client";
-import { AlertTriangle, Clock, Activity, FileText, CheckCircle, MessageSquare, ShieldCheck, RefreshCcw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { AlertTriangle, Clock, Activity, FileText, CheckCircle, MessageSquare, ShieldCheck, RefreshCcw, Upload } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { useAuth } from "@/components/AuthContext";
 import { dashboard, alerts } from "../lib/api";
 
 export default function Dashboard() {
@@ -51,14 +52,23 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex justify-between items-end mb-2">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Good Morning, {name}</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Good Morning, {currentOfficial?.name || name}</h1>
           <p className="text-navy-400 text-sm font-medium tracking-wide">
             {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
-        <button onClick={fetchData} className="px-4 py-2 bg-navy-800 hover:bg-navy-700 rounded-lg text-xs font-bold uppercase tracking-widest text-blue-400 flex items-center border border-navy-600 transition-colors shadow">
-          {loading ? <RefreshCcw className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCcw className="w-4 h-4 mr-2" />} Sync Data
-        </button>
+        <div className="flex items-center space-x-3">
+          <input type="file" ref={fileInputRef} className="hidden" />
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded shadow-lg border border-blue-500 transition-all uppercase tracking-widest"
+          >
+            <Upload className="w-4 h-4 mr-2" /> Upload Files
+          </button>
+          <button onClick={fetchData} className="px-4 py-2 bg-navy-800 hover:bg-navy-700 rounded text-xs font-bold uppercase tracking-widest text-blue-400 flex items-center border border-navy-600 transition-colors shadow">
+            {loading ? <RefreshCcw className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCcw className="w-4 h-4 mr-2" />} Sync Data
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-12 gap-6">
