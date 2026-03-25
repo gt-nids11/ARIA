@@ -14,6 +14,6 @@ export async function GET(req: Request) {
         });
         return NextResponse.json({ brief: completion.choices[0].message.content });
     } catch (e) {
-        return NextResponse.json({ error: e.message }, { status: 500 });
+        return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
     }
 }

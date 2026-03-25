@@ -18,6 +18,6 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ draft: completion.choices[0].message.content });
     } catch(e) {
-        return NextResponse.json({ error: e.message }, { status: 500 });
+        return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
     }
 }

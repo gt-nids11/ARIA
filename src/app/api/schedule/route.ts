@@ -16,6 +16,6 @@ export async function POST(req: Request) {
         addAuditLog('ADD_EVENT', 'Schedule', `Added event ${ev.title}`);
         return NextResponse.json(schedule);
     } catch(e) {
-        return NextResponse.json({ error: e.message }, { status: 500 });
+        return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
     }
 }

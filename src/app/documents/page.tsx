@@ -15,14 +15,35 @@ export default function Documents() {
         const formData = new FormData();
         formData.append('file', file);
         try {
-            const res = await fetch('/api/documents', { method: 'POST', body: formData });
-            const data = await res.json();
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const text = await res.text();
+
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch {
+                console.error("Server returned HTML instead of JSON:", text);
+                alert("Server error — check backend");
+                setLoading(false);
+                return;
+            }
+
+            if (!res.ok) {
+                alert(data.error || "Upload failed");
+                setLoading(false);
+                return;
+            }
+
             const newDoc = { name: file.name, date: new Date().toLocaleDateString(), data };
             setDocs([newDoc, ...docs]);
             setSelectedDoc(newDoc);
-        } catch (e) {
-            console.error(e);
-            alert('Upload failed');
+        } catch (e: any) {
+            console.error("Upload error:", e);
+            alert(`Upload failed: ${e.message}`);
         }
         setLoading(false);
     };

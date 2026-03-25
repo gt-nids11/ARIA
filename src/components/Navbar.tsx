@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { usePathname } from 'next/navigation';
 import { Bell, Search, UserCircle, ChevronDown } from 'lucide-react';
 import { useAuth } from './AuthContext';
@@ -8,8 +8,6 @@ export default function Navbar() {
   const { currentOfficial, officials, setCurrentOfficial } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const pathname = usePathname();
-  const { currentOfficial, officials, setCurrentOfficial } = useAuth();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const getPageTitle = () => {
     switch (pathname) {

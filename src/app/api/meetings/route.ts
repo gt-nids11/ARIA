@@ -34,9 +34,9 @@ export async function POST(req: Request) {
             response_format: { type: "json_object" }
         });
 
-        const analysis = JSON.parse(completion.choices[0].message.content);
+        const analysis = JSON.parse(completion.choices[0].message.content || '{}');
         return NextResponse.json({ transcript: transcription.text, analysis });
     } catch(e) {
-        return NextResponse.json({ error: e.message }, { status: 500 });
+        return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
     }
 }

@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { addAuditLog } from '../data';
-
 import { openai } from '../../../lib/openai';
 import fs from 'fs';
-import pdfParse from 'pdf-parse';
+
+// Use require for pdf-parse to avoid ESM default import issues
+const pdfParse = require('pdf-parse');
 
 export async function POST(req: Request) {
     try {
@@ -22,6 +23,16 @@ export async function POST(req: Request) {
             text = buffer.toString('utf-8');
         }
 
+        if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.trim() === '') {
+            return NextResponse.json({
+                summary: `[MOCK SUMMARY] The uploaded document (${file.name}) contains ${text.length} characters of text. This is a mock response because OPENAI_API_KEY is not configured in the environment. ` + text.substring(0, 100).replace(/\n/g, ' ') + "...",
+                key_decisions: "- Mock decision: Proceed with local testing\n- Mock decision: Configure API key for real intelligence",
+                action_items: "1. Add OPENAI_API_KEY to .env.local file\n2. Restart the development server",
+                deadlines: "ASAP - Provide API Key",
+                stakeholders: "Local End User"
+            });
+        }
+
         const completion = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [
@@ -31,9 +42,10 @@ export async function POST(req: Request) {
             response_format: { type: "json_object" }
         });
 
-        const analysis = JSON.parse(completion.choices[0].message.content);
+        const analysis = JSON.parse(completion.choices[0].message.content || '{}');
         return NextResponse.json(analysis);
     } catch(e) {
-        return NextResponse.json({ error: e.message }, { status: 500 });
+        console.error("API Error in /api/documents:", e);
+        return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
     }
 }
