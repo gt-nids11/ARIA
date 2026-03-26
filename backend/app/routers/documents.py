@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.document import Document
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, require_leader_or_admin
 from app.models.user import User
 from app.models.audit import AuditLog
 from app.services.openai_service import summarize_document
@@ -31,14 +31,27 @@ def extract_text(file_path: str, ext: str) -> str:
     return ""
 
 @router.post("/upload")
-def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
+async def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    ALLOWED_EXTENSIONS = {'.pdf', '.txt', '.docx'}
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    if file_ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(400, "Only PDF, TXT, and DOCX files are allowed")
+
+    MAX_SIZE = 10 * 1024 * 1024
+    contents = await file.read()
+    if len(contents) > MAX_SIZE:
+        raise HTTPException(400, "File size must be under 10MB")
+    await file.seek(0)
+    
+    import re
+    safe_filename = re.sub(r'[^a-zA-Z0-9._-]', '_', file.filename)
+    file_path = f"uploads/{safe_filename}"
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     
     with open(file_path, "wb") as buffer:
-        buffer.write(file.file.read())
+        buffer.write(contents)
         
-    ext = os.path.splitext(file.filename)[1].lower()
+    ext = os.path.splitext(safe_filename)[1].lower()
     text = extract_text(file_path, ext)
     
     summary_data = summarize_document(text)
@@ -52,23 +65,23 @@ def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db),
         action_items=summary_data.get("action_items", ""),
         deadlines=summary_data.get("deadlines", ""),
         stakeholders=summary_data.get("stakeholders", ""),
-        uploaded_by=current_user.id
+        uploaded_by=int(current_user.get("sub", 0))
     )
     
     db.add(new_doc)
     db.commit()
     db.refresh(new_doc)
     
-    add_document_to_store(str(new_doc.id), text, {"filename": file.filename})
+    add_document_to_store(str(new_doc.id), text, {"filename": safe_filename})
     
-    audit = AuditLog(user_id=current_user.id, user_name=current_user.name, action="UPLOAD_DOCUMENT", module="Documents", details=f"Uploaded {file.filename}")
+    audit = AuditLog(user_id=int(current_user.get("sub", 0)), user_name=current_user.get("name", "Unknown"), action="UPLOAD_DOCUMENT", module="Documents", details=f"Uploaded {safe_filename}")
     db.add(audit)
     db.commit()
     
     return {"id": new_doc.id, "summary": new_doc.summary, "message": "Uploaded successfully"}
 
 @router.get("")
-def list_documents(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def list_documents(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     return db.query(Document).order_by(Document.created_at.desc()).all()
 
 @router.get("/{id}")
@@ -79,7 +92,7 @@ def get_document(id: int, db: Session = Depends(get_db)):
     return doc
 
 @router.delete("/{id}")
-def delete_document(id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def delete_document(id: int, db: Session = Depends(get_db), current_user: dict = Depends(require_leader_or_admin)):
     doc = db.query(Document).filter(Document.id == id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
@@ -89,7 +102,7 @@ def delete_document(id: int, db: Session = Depends(get_db), current_user: User =
     
     db.delete(doc)
     
-    audit = AuditLog(user_id=current_user.id, user_name=current_user.name, action="DELETE_DOCUMENT", module="Documents", details=f"Deleted doc {id}")
+    audit = AuditLog(user_id=int(current_user.get("sub", 0)), user_name=current_user.get("name", "Unknown"), action="DELETE_DOCUMENT", module="Documents", details=f"Deleted doc {id}")
     db.add(audit)
     db.commit()
     return {"message": "Deleted"}
@@ -98,9 +111,9 @@ class QueryReq(BaseModel):
     question: str
 
 @router.post("/query")
-def query_docs(req: QueryReq, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def query_docs(req: QueryReq, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     ans = answer_question(req.question)
-    audit = AuditLog(user_id=current_user.id, user_name=current_user.name, action="QUERY_DOCUMENTS", module="Documents", details=req.question)
+    audit = AuditLog(user_id=int(current_user.get("sub", 0)), user_name=current_user.get("name", "Unknown"), action="QUERY_DOCUMENTS", module="Documents", details=req.question)
     db.add(audit)
     db.commit()
     return {"answer": ans, "sources": []}

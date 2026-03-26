@@ -7,11 +7,12 @@ from app.models.document import Document
 from app.models.complaint import Complaint
 from app.services.openai_service import generate_morning_brief
 from datetime import datetime
+from app.core.dependencies import get_current_user
 
 router = APIRouter()
 
 @router.get("/brief")
-def get_brief(db: Session = Depends(get_db)):
+def get_brief(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     high_alerts = db.query(Alert).filter(Alert.severity == "high", Alert.resolved == False).limit(3).all()
     today = datetime.utcnow().date()
     evs = db.query(ScheduleEvent).filter(db.func.date(ScheduleEvent.start_time) == today).all()
@@ -24,7 +25,7 @@ def get_brief(db: Session = Depends(get_db)):
     return {"brief": b}
 
 @router.get("/stats")
-def stats(db: Session = Depends(get_db)):
+def stats(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     a = db.query(Alert).filter(Alert.resolved == False).count()
     today = datetime.utcnow().date()
     e = db.query(ScheduleEvent).filter(db.func.date(ScheduleEvent.start_time) == today).count()

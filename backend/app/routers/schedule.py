@@ -6,32 +6,42 @@ from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.models.audit import AuditLog
 from app.services.openai_service import generate_meeting_briefing
-from pydantic import BaseModel
-from typing import Optional
-from datetime import datetime
+from pydantic import BaseModel, validator
 
 router = APIRouter()
 
-class SchedCreate(BaseModel):
+class ScheduleCreate(BaseModel):
     title: str
     event_type: str
     priority: str
-    start_time: datetime
-    end_time: datetime
+    start_time: str
+    end_time: str
     attendees: str
 
+    @validator('title')
+    def title_length(cls, v):
+        if len(v.strip()) < 3:
+            raise ValueError('Title too short')
+        return v.strip()
+
+    @validator('priority')
+    def validate_priority(cls, v):
+        if v not in ['high', 'medium', 'low']:
+            raise ValueError('Priority must be high, medium, or low')
+        return v
+
 @router.post("")
-def create_ev(req: SchedCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def create_ev(req: ScheduleCreate, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     conflict = db.query(ScheduleEvent).filter(ScheduleEvent.start_time < req.end_time, ScheduleEvent.end_time > req.start_time).first()
     if conflict:
         return {"conflict": True, "conflicting_event": {"id": conflict.id, "title": conflict.title}}
         
-    ev = ScheduleEvent(**req.dict(), created_by=current_user.id)
+    ev = ScheduleEvent(**req.dict(), created_by=int(current_user.get("sub", 0)))
     db.add(ev)
     db.commit()
     db.refresh(ev)
     
-    audit = AuditLog(user_id=current_user.id, user_name=current_user.name, action="CREATE_SCHEDULE", module="Schedule", details=ev.title)
+    audit = AuditLog(user_id=int(current_user.get("sub", 0)), user_name=current_user.get("name", "Unknown"), action="CREATE_SCHEDULE", module="Schedule", details=ev.title)
     db.add(audit)
     db.commit()
     return ev
@@ -45,7 +55,7 @@ def get_ev(id: int, db: Session = Depends(get_db)):
     return db.query(ScheduleEvent).filter(ScheduleEvent.id == id).first()
 
 @router.get("/{id}/briefing")
-def get_briefing(id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_briefing(id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     ev = db.query(ScheduleEvent).filter(ScheduleEvent.id == id).first()
     if ev.briefing:
         return {"briefing": ev.briefing}
@@ -54,13 +64,13 @@ def get_briefing(id: int, db: Session = Depends(get_db), current_user: User = De
     ev.briefing = b
     db.commit()
     
-    audit = AuditLog(user_id=current_user.id, user_name=current_user.name, action="GENERATE_BRIEFING", module="Schedule", details=str(id))
+    audit = AuditLog(user_id=int(current_user.get("sub", 0)), user_name=current_user.get("name", "Unknown"), action="GENERATE_BRIEFING", module="Schedule", details=str(id))
     db.add(audit)
     db.commit()
     return {"briefing": b}
 
 @router.patch("/{id}")
-def update_ev(id: int, req: dict, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def update_ev(id: int, req: dict, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     ev = db.query(ScheduleEvent).filter(ScheduleEvent.id == id).first()
     for k, v in req.items():
         setattr(ev, k, v)
@@ -69,7 +79,7 @@ def update_ev(id: int, req: dict, db: Session = Depends(get_db), current_user: U
     return ev
 
 @router.delete("/{id}")
-def del_ev(id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def del_ev(id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     ev = db.query(ScheduleEvent).filter(ScheduleEvent.id == id).first()
     db.delete(ev)
     db.commit()

@@ -13,12 +13,25 @@ router = APIRouter()
 UPLOAD_DIR = "uploads"
 
 @router.post("/upload")
-def upload_meeting(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
+async def upload_meeting(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    ALLOWED_AUDIO = {'.mp3', '.wav', '.m4a', '.mp4', '.ogg'}
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    if file_ext not in ALLOWED_AUDIO:
+        raise HTTPException(400, "Only audio files are allowed")
+
+    MAX_AUDIO_SIZE = 25 * 1024 * 1024
+    contents = await file.read()
+    if len(contents) > MAX_AUDIO_SIZE:
+        raise HTTPException(400, "File size must be under 25MB")
+    await file.seek(0)
+    
+    import re
+    safe_filename = re.sub(r'[^a-zA-Z0-9._-]', '_', file.filename)
+    file_path = f"uploads/{safe_filename}"
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     
     with open(file_path, "wb") as buffer:
-        buffer.write(file.file.read())
+        buffer.write(contents)
         
     transcript = transcribe_audio(file_path)
     analysis = summarize_meeting(transcript)
@@ -32,21 +45,21 @@ def upload_meeting(file: UploadFile = File(...), db: Session = Depends(get_db), 
         action_items=analysis.get("action_items", ""),
         unresolved_issues=analysis.get("unresolved_issues", ""),
         next_steps=analysis.get("next_steps", ""),
-        created_by=current_user.id
+        created_by=int(current_user.get("sub", 0))
     )
     
     db.add(meeting)
     db.commit()
     db.refresh(meeting)
     
-    audit = AuditLog(user_id=current_user.id, user_name=current_user.name, action="UPLOAD_MEETING", module="Meetings", details=f"Uploaded meeting {file.filename}")
+    audit = AuditLog(user_id=int(current_user.get("sub", 0)), user_name=current_user.get("name", "Unknown"), action="UPLOAD_MEETING", module="Meetings", details=f"Uploaded meeting {safe_filename}")
     db.add(audit)
     db.commit()
     
     return meeting
 
 @router.get("")
-def list_meetings(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def list_meetings(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     return db.query(Meeting).order_by(Meeting.created_at.desc()).all()
 
 @router.get("/{id}")

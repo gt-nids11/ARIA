@@ -42,3 +42,6 @@ backend/__pycache__/
 backend/.env
 backend/uploads/
 backend/chroma_db/
+.env.local
+node_modules/
+.next/

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.alert import Alert
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, require_leader_or_admin
 from app.models.user import User
 from app.models.audit import AuditLog
 from pydantic import BaseModel
@@ -24,25 +24,25 @@ def list_alerts(severity: Optional[str] = None, resolved: Optional[bool] = None,
     return q.order_by(Alert.resolved.asc(), Alert.created_at.desc()).all()
 
 @router.post("")
-def create_a(req: AlertCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def create_a(req: AlertCreate, db: Session = Depends(get_db), current_user: dict = Depends(require_leader_or_admin)):
     a = Alert(title=req.title, description=req.description, severity=req.severity, suggested_action=req.suggested_action)
     db.add(a)
     db.commit()
     db.refresh(a)
     
-    audit = AuditLog(user_id=current_user.id, user_name=current_user.name, action="CREATE_ALERT", module="Alerts", details=a.title)
+    audit = AuditLog(user_id=int(current_user.get("sub", 0)), user_name=current_user.get("name", "Unknown"), action="CREATE_ALERT", module="Alerts", details=a.title)
     db.add(audit)
     db.commit()
     return a
 
 @router.patch("/{id}/resolve")
-def resolve(id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def resolve(id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     a = db.query(Alert).filter(Alert.id == id).first()
     a.resolved = True
     db.commit()
     db.refresh(a)
     
-    audit = AuditLog(user_id=current_user.id, user_name=current_user.name, action="RESOLVE_ALERT", module="Alerts", details=str(id))
+    audit = AuditLog(user_id=int(current_user.get("sub", 0)), user_name=current_user.get("name", "Unknown"), action="RESOLVE_ALERT", module="Alerts", details=str(id))
     db.add(audit)
     db.commit()
     return a

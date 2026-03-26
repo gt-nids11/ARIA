@@ -1,6 +1,9 @@
 fastapi
 uvicorn
+sqlalchemy
+pg8000
 motor
+pymongo
 python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
@@ -16,3 +19,5 @@ apscheduler
 python-dotenv
 pandas
 pydantic-settings
+slowapi
+pydantic[email]
