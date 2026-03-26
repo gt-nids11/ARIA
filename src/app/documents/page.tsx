@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef } from 'react';
+import { documents } from "../../lib/api";
 import { UploadCloud, FileText, X, AlertCircle, Users, Calendar, CheckSquare, RefreshCcw } from 'lucide-react';
 
 export default function Documents() {
@@ -12,31 +13,8 @@ export default function Documents() {
         if (!e.target.files || e.target.files.length === 0) return;
         const file = e.target.files[0];
         setLoading(true);
-        const formData = new FormData();
-        formData.append('file', file);
         try {
-            const res = await fetch('/api/upload', {
-                method: 'POST',
-                body: formData
-            });
-
-            const text = await res.text();
-
-            let data;
-            try {
-                data = JSON.parse(text);
-            } catch {
-                console.error("Server returned HTML instead of JSON:", text);
-                alert("Server error — check backend");
-                setLoading(false);
-                return;
-            }
-
-            if (!res.ok) {
-                alert(data.error || "Upload failed");
-                setLoading(false);
-                return;
-            }
+            const data = await documents.upload(file);
 
             const newDoc = { name: file.name, date: new Date().toLocaleDateString(), data };
             setDocs([newDoc, ...docs]);
