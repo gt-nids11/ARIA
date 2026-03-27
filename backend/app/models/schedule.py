@@ -11,6 +11,7 @@ class ScheduleEvent(Base):
     start_time = Column(DateTime)
     end_time = Column(DateTime)
     attendees = Column(Text)
+    location = Column(String)
     linked_document_id = Column(Integer, ForeignKey("documents.id"), nullable=True)
     briefing = Column(Text, nullable=True)
     created_by = Column(Integer, ForeignKey("users.id"))

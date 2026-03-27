@@ -1,35 +1,4 @@
-export const scheduleEvents = [
-    {
-        id: '1', title: 'Budget Review Meeting', event_type: 'meeting',
-        priority: 'high', start_time: '09:00', end_time: '10:00',
-        attendees: ['Finance Dept', 'Chief Secretary'], has_briefing: false
-    },
-    {
-        id: '2', title: 'Ward 7 Infrastructure Visit', event_type: 'site_visit',
-        priority: 'medium', start_time: '11:30', end_time: '13:00',
-        attendees: ['PWD Officer', 'Ward Councillor'], has_briefing: false
-    },
-    {
-        id: '3', title: 'Press Conference - Water Supply', event_type: 'press',
-        priority: 'high', start_time: '15:00', end_time: '15:45',
-        attendees: ['Media', 'PRO'], has_briefing: false
-    },
-    {
-        id: '4', title: 'Cabinet Sub-Committee', event_type: 'meeting',
-        priority: 'high', start_time: '16:00', end_time: '17:30',
-        attendees: ['Cabinet Members'], has_briefing: false
-    },
-    {
-        id: '5', title: 'Constituent Meeting - Ward 3', event_type: 'meeting',
-        priority: 'low', start_time: '17:45', end_time: '18:30',
-        attendees: ['Ward 3 Representatives'], has_briefing: false
-    },
-    {
-        id: '6', title: 'Security Briefing', event_type: 'briefing',
-        priority: 'medium', start_time: '08:00', end_time: '08:45',
-        attendees: ['Security Chief', 'Intelligence Officer'], has_briefing: false
-    },
-];
+export const scheduleEvents: any[] = [];
 
 export const auditLogs = [
     {

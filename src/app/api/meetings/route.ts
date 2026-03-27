@@ -98,7 +98,7 @@ export async function POST(req: Request) {
         // Connect to MongoDB and store audio
         try {
             const client = await clientPromise;
-            const db = client.db("ARIA_db");
+            const db = client.db("aria_db");
             const collection = db.collection("meetings");
 
             const result = await collection.insertOne({

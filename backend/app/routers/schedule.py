@@ -7,6 +7,7 @@ from app.models.user import User
 from app.models.audit import AuditLog
 from app.services.openai_service import generate_meeting_briefing
 from pydantic import BaseModel, validator
+from typing import Optional
 
 router = APIRouter()
 
@@ -17,6 +18,7 @@ class ScheduleCreate(BaseModel):
     start_time: str
     end_time: str
     attendees: str
+    location: str
 
     @validator('title')
     def title_length(cls, v):

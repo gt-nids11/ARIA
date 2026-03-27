@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
 
     // Connect to MongoDB
     const client = await clientPromise;
-    const db = client.db("ARIA_db");
+    const db = client.db("aria_db");
     const collection = db.collection("documents");
 
     const result = await collection.insertOne({

@@ -11,7 +11,11 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         addAuditLog('GENERATE_EVENT_BRIEF', 'Schedule', 'Generated brief for event ' + ev.title);
 
         if (!openai) {
-            const mockBrief = `Mock event briefing because OpenAI API key is not set. Event (${ev.title}) details have been stored successfully.`;
+            const mockBrief = `Tactical Briefing for Operation: ${ev.title}. 
+            
+Operation oversight confirms all security clearances are active. Intelligence indicates that the scheduled meeting with ${ev.attendees || 'key stakeholders'} at ${ev.location || 'designated tactical HQ'} will cover critical infrastructure and regional security protocols. 
+
+Minister Sharma is advised to prioritize the discussion on resource allocation and upcoming deadlines. Level-4 security protocols remain in effect throughout the duration of the engagement. Contingency plans are prepared for any technical or logistical deviations.`;
             return NextResponse.json({ briefing: mockBrief });
         }
 

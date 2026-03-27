@@ -1,4 +1,4 @@
-﻿from pydantic import BaseModel
+from pydantic import BaseModel
 from typing import Optional, List, Any
 from datetime import datetime
 
@@ -83,6 +83,8 @@ class ScheduleEventCreate(BaseModel):
     start_time: datetime
     end_time: datetime
     attendees: str
+    location: Optional[str] = None
+    description: Optional[str] = None
     linked_document_id: Optional[int] = None
 
 class ScheduleEventOut(ScheduleEventCreate):

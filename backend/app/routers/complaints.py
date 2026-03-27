@@ -8,6 +8,8 @@ from app.models.audit import AuditLog
 from pydantic import BaseModel, validator
 from typing import Optional
 
+router = APIRouter()
+
 class ComplaintCreate(BaseModel):
     title: str
     description: str

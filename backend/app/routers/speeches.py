@@ -5,7 +5,7 @@ from pydantic import BaseModel, validator
 from app.database import get_db
 from app.models.audit import AuditLog
 from app.core.dependencies import get_current_user
-from app.services.speeches_service import draft_speech
+from app.services.openai_service import draft_speech
 
 router = APIRouter()
 

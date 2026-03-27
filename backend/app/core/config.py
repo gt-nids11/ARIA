@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     OPENAI_API_KEY: str | None = None
+    MONGODB_DB_NAME: str = "aria_db"
     FRONTEND_URL: str = "https://aria-two-mu.vercel.app"
 
     class Config:
