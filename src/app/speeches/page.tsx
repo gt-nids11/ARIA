@@ -19,10 +19,14 @@ export default function Speeches() {
         try {
             const res = await fetch('/api/speeches', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
             const data = await res.json();
-            setDraft(data.draft);
-        } catch (e) {
+            if (res.ok) {
+                setDraft(data.draft);
+            } else {
+                throw new Error(data.error || 'Failed to generate speech');
+            }
+        } catch (e: any) {
             console.error(e);
-            alert('Failed to generate draft');
+            alert(e.message);
         }
         setIsGenerating(false);
     };
