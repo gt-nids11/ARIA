@@ -3,6 +3,7 @@
 import { AlertTriangle, Clock, Activity, FileText, CheckCircle, MessageSquare, ShieldCheck, RefreshCcw, Upload, Check } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/components/AuthContext";
+import { useRouter } from "next/navigation";
 import { dashboard, alerts } from "../lib/api";
 
 const DEFAULT_BRIEF = `MORNING TO-DO LIST:
@@ -14,12 +15,14 @@ const DEFAULT_BRIEF = `MORNING TO-DO LIST:
 
 export default function Dashboard() {
   const { currentOfficial } = useAuth();
+  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [stats, setStats] = useState({ pending_alerts: 0, todays_meetings: 0, open_complaints: 0, drafts_saved: 0 });
   const [brief, setBrief] = useState(DEFAULT_BRIEF);
   const [activeAlerts, setActiveAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("Official");
+  const [isAuthed, setIsAuthed] = useState(false);
   
   // New state for file upload notifications
   const [uploadMsg, setUploadMsg] = useState<{text: string, type: 'info' | 'success'} | null>(null);
@@ -89,7 +92,16 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => { fetchData() }, []);
+  useEffect(() => {
+    // Check if user is authenticated
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    setIsAuthed(true);
+    fetchData();
+  }, [router]);
 
   const resolveAlert = async (id: number) => {
     try {
@@ -99,6 +111,11 @@ export default function Dashboard() {
       console.error(err);
     }
   };
+
+  // Prevent rendering dashboard if not authenticated
+  if (!isAuthed) {
+    return null;
+  }
 
   return (
     <div className="space-y-6">
