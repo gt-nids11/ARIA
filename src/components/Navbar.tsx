@@ -9,6 +9,8 @@ export default function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const pathname = usePathname();
 
+  if (pathname === '/login') return null;
+
   const getPageTitle = () => {
     switch (pathname) {
       case '/': return 'Dashboard Overview';

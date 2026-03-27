@@ -1,58 +1,48 @@
-import pdfParse from 'pdf-parse';
-import { NextResponse } from 'next/server';
-import { openai } from '../../../lib/openai';
-import { addAuditLog } from '../data';
+import { NextRequest, NextResponse } from "next/server";
+import clientPromise from "@/lib/mongodb";
 
-export const runtime = 'nodejs'; // VERY IMPORTANT
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const formData = await req.formData();
-    const file = formData.get('file') as File;
-
+    const data = await req.formData();
+    const file: File | null = data.get("file") as unknown as File;
+    
     if (!file) {
-      return Response.json({ error: "No file uploaded" }, { status: 400 });
+      return NextResponse.json({ success: false, message: "No file explicitly provided" }, { status: 400 });
     }
 
-    addAuditLog('PROCESS_DOCUMENT', 'Documents', `Processed document ${file.name}`);
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-
-    let text = '';
-    if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-        const data = await pdfParse(buffer);
-        text = data.text;
+    // Try to extract pure text if it's a txt file, otherwise store base64 representation
+    let contentSnippet = "";
+    if (file.name.endsWith(".txt") || file.name.endsWith(".md") || file.name.endsWith(".csv")) {
+        contentSnippet = buffer.toString('utf-8');
     } else {
-        text = buffer.toString('utf-8');
+        contentSnippet = `[Binary Data Blob: ${file.type}]`;
     }
 
-    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.trim() === '') {
-        return NextResponse.json({
-            summary: `[MOCK SUMMARY] The uploaded document (${file.name}) contains ${text.length} characters of text. This is a mock response because OPENAI_API_KEY is not configured in the environment. ` + text.substring(0, 100).replace(/\n/g, ' ') + "...",
-            key_decisions: "- Mock decision: Proceed with local testing\n- Mock decision: Configure API key for real intelligence",
-            action_items: "1. Add OPENAI_API_KEY to .env.local file\n2. Restart the development server",
-            deadlines: "ASAP - Provide API Key",
-            stakeholders: "Local End User"
-        });
-    }
+    // Connect to MongoDB
+    const client = await clientPromise;
+    const db = client.db("aria_db"); // Default ARIA database name
+    const collection = db.collection("documents");
 
-    const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-            { role: "system", content: "You are a government document analyst. Analyze this document and return a JSON object with these exact keys: summary, key_decisions, action_items, deadlines, stakeholders. Each value is a string with items separated by newlines. Return only valid JSON directly parseable without codeblocks." },
-            { role: "user", content: text }
-        ],
-        response_format: { type: "json_object" }
+    const result = await collection.insertOne({
+      filename: file.name,
+      file_size: file.size,
+      mime_type: file.type,
+      content: contentSnippet,
+      uploaded_at: new Date(),
+      status: "processed_frontend"
     });
 
-    const analysis = JSON.parse(completion.choices[0].message.content || '{}');
-    return NextResponse.json(analysis);
+    return NextResponse.json({ 
+        success: true, 
+        message: "File stored in database", 
+        documentId: result.insertedId 
+    }, { status: 200 });
 
   } catch (error: any) {
-    console.error("API ERROR:", error);
-
-    return Response.json({
-      error: error.message || "Something went wrong"
-    }, { status: 500 });
+    console.error("Upload Error:", error);
+    return NextResponse.json({ success: false, message: error.message || "Failed to upload" }, { status: 500 });
   }
 }

@@ -27,10 +27,12 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    import traceback
+    traceback.print_exc()
     print(f"Unhandled error: {exc}")
     return JSONResponse(
         status_code=500,
-        content={"detail": "An internal error occurred. Please try again later."}
+        content={"detail": f"Internal error: {str(exc)}"}
     )
 
 @app.exception_handler(404)

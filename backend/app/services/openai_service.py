@@ -1,10 +1,19 @@
 import json
-from openai import OpenAI
 from app.core.config import settings
 
-client = OpenAI(api_key=settings.OPENAI_API_KEY)
+# Initialize OpenAI client only if API key is available
+client = None
+if settings.OPENAI_API_KEY and settings.OPENAI_API_KEY != "sk-your-openai-api-key":
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=settings.OPENAI_API_KEY)
+    except ImportError:
+        print("Warning: OpenAI package not available")
 
 def summarize_document(text: str) -> dict:
+    if not client:
+        return {"summary": "OpenAI API key not configured", "key_decisions": "", "action_items": "", "deadlines": "", "stakeholders": ""}
+
     try:
         response = client.chat.completions.create(
             model="gpt-4o",
@@ -16,9 +25,12 @@ def summarize_document(text: str) -> dict:
         )
         return json.loads(response.choices[0].message.content)
     except Exception as e:
-        return {"summary": str(e), "key_decisions": "", "action_items": "", "deadlines": "", "stakeholders": ""}
+        return {"summary": f"Error: {str(e)}", "key_decisions": "", "action_items": "", "deadlines": "", "stakeholders": ""}
 
 def summarize_meeting(transcript: str) -> dict:
+    if not client:
+        return {"summary": "OpenAI API key not configured", "key_decisions": "", "action_items": "", "unresolved_issues": "", "next_steps": ""}
+
     try:
         response = client.chat.completions.create(
             model="gpt-4o",
@@ -30,9 +42,12 @@ def summarize_meeting(transcript: str) -> dict:
         )
         return json.loads(response.choices[0].message.content)
     except Exception as e:
-        return {"summary": str(e), "key_decisions": "", "action_items": "", "unresolved_issues": "", "next_steps": ""}
+        return {"summary": f"Error: {str(e)}", "key_decisions": "", "action_items": "", "unresolved_issues": "", "next_steps": ""}
 
 def draft_speech(event_type, audience, topic, key_points, tone) -> str:
+    if not client:
+        return "OpenAI API key not configured. Please set a valid API key to use speech drafting."
+
     try:
         response = client.chat.completions.create(
             model="gpt-4o",
@@ -43,9 +58,12 @@ def draft_speech(event_type, audience, topic, key_points, tone) -> str:
         )
         return response.choices[0].message.content
     except Exception as e:
-        return str(e)
+        return f"Error generating speech: {str(e)}"
 
 def generate_morning_brief(alerts, meetings, complaints_count) -> str:
+    if not client:
+        return "OpenAI API key not configured. Cannot generate morning brief."
+
     try:
         alerts_text = "\n".join([f"- {a['severity']}: {a['title']}" for a in alerts])
         meetings_text = "\n".join([f"- {m['title']} at {m['start_time']}" for m in meetings])

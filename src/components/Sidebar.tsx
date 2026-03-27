@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, FileText, Users, Mic, Map, Calendar, Bell, Shield, ShieldCheck } from 'lucide-react';
@@ -16,6 +16,7 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  if (pathname === '/login') return null;
 
   return (
     <div className="w-64 bg-navy-800/80 backdrop-blur-md border-r border-navy-700/50 flex flex-col h-full text-foreground transition-all shrink-0">
