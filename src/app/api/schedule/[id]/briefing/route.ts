@@ -10,6 +10,11 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
         addAuditLog('GENERATE_EVENT_BRIEF', 'Schedule', 'Generated brief for event ' + ev.title);
 
+        if (!openai) {
+            const mockBrief = `Mock event briefing because OpenAI API key is not set. Event (${ev.title}) details have been stored successfully.`;
+            return NextResponse.json({ briefing: mockBrief });
+        }
+
         const completion = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [

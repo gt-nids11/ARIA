@@ -21,7 +21,8 @@ def get_brief(db: Session = Depends(get_db), current_user: dict = Depends(get_cu
     alerts_data = [{"title": a.title, "severity": a.severity} for a in high_alerts]
     evs_data = [{"title": e.title, "start_time": e.start_time.strftime("%H:%M")} for e in evs]
     
-    b = generate_morning_brief(alerts_data, evs_data, open_c)
+    user_role = current_user.get("role", "admin")  # Default to admin if not set
+    b = generate_morning_brief(alerts_data, evs_data, open_c, user_role)
     return {"brief": b}
 
 @router.get("/stats")

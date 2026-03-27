@@ -86,8 +86,3 @@ def answer_question(question: str) -> str:
         return response.choices[0].message.content
     except Exception as e:
         return f"Error processing question: {str(e)}"
-            ]
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        return f"Error computing answer: {e}"

@@ -60,7 +60,7 @@ def draft_speech(event_type, audience, topic, key_points, tone) -> str:
     except Exception as e:
         return f"Error generating speech: {str(e)}"
 
-def generate_morning_brief(alerts, meetings, complaints_count) -> str:
+def generate_morning_brief(alerts, meetings, complaints_count, role="admin") -> str:
     if not client:
         return "OpenAI API key not configured. Cannot generate morning brief."
 
@@ -70,10 +70,20 @@ def generate_morning_brief(alerts, meetings, complaints_count) -> str:
         
         prompt = f"Alerts:\n{alerts_text}\n\nMeetings Today:\n{meetings_text}\n\nOpen Complaints: {complaints_count}"
         
+        # Customize system prompt based on role
+        if role == "admin":
+            system_content = "You are ARIA, AI assistant for the Chief Administrator. Generate a 4-sentence morning brief that is strategic, data-driven and focused on oversight. Prioritize system-wide issues and policy implications. End with one clear action recommendation."
+        elif role == "leader":
+            system_content = "You are ARIA, AI assistant for the Minister. Generate a 4-sentence morning brief that is direct, urgent and professional. Prioritize the most critical items. End with one clear action recommendation."
+        elif role == "aide":
+            system_content = "You are ARIA, AI assistant for the Aide. Generate a 4-sentence morning brief that is operational, detail-oriented and focused on immediate tasks. Prioritize actionable items and follow-ups. End with one clear action recommendation."
+        else:
+            system_content = "You are ARIA, AI assistant. Generate a 4-sentence morning brief that is direct, urgent and professional. Prioritize the most critical items. End with one clear action recommendation."
+        
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are ARIA, AI assistant for Minister Sharma. Generate a 4-sentence morning brief that is direct, urgent and professional. Prioritize the most critical items. End with one clear action recommendation."},
+                {"role": "system", "content": system_content},
                 {"role": "user", "content": prompt}
             ]
         )

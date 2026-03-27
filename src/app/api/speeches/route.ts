@@ -7,7 +7,12 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
         addAuditLog('GENERATE_SPEECH', 'Speeches', `Generated speech for ${body.topic}`);
-        
+
+        if (!openai) {
+            const mockDraft = `Mock speech draft for ${body.topic}. (OpenAI key missing; install OPENAI_API_KEY for live output.)`;
+            return NextResponse.json({ draft: mockDraft });
+        }
+
         const completion = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [
