@@ -18,6 +18,7 @@ export async function GET() {
       mime_type: doc.mime_type,
       uploaded_at: doc.uploaded_at,
       status: doc.status,
+      intelligence: doc.intelligence || null,
     }));
 
     return NextResponse.json({ success: true, documents: safeDocuments }, { status: 200 });

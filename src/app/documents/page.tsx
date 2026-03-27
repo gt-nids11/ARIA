@@ -3,7 +3,10 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AuthProvider, useAuth } from "@/components/AuthContext";
-import { Upload, FileText, CheckCircle, RefreshCcw, Search, Calendar, Database, Check } from "lucide-react";
+import { 
+  Upload, FileText, CheckCircle, RefreshCcw, Search, 
+  Calendar, Database, Check, X, ShieldAlert, FileSearch 
+} from "lucide-react";
 
 function DocumentsContent() {
   const router = useRouter();
@@ -12,6 +15,8 @@ function DocumentsContent() {
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadMsg, setUploadMsg] = useState<{text: string, type: 'info' | 'success' | 'error'} | null>(null);
+  const [selectedDoc, setSelectedDoc] = useState<any>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Authenticate access
@@ -31,8 +36,10 @@ function DocumentsContent() {
       const data = await res.json();
       if (res.ok && data.success) {
         setDocuments(data.documents);
-      } else {
-        console.error("Failed to fetch documents:", data.message);
+        // Auto-select first document if none selected
+        if (data.documents.length > 0 && !selectedDoc) {
+          // setSelectedDoc(data.documents[0]);
+        }
       }
     } catch (err) {
       console.error("Error fetching documents:", err);
@@ -41,8 +48,7 @@ function DocumentsContent() {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFileUpload = async (file: File) => {
     if (!file) return;
     
     setUploadMsg({ text: `Uploading '${file.name}' to ARIA Secure Vault...`, type: 'info' });
@@ -60,151 +66,264 @@ function DocumentsContent() {
 
       if (res.ok && data.success) {
         setUploadMsg({ 
-          text: `SUCCESS: '${file.name}' has been secured in the database.`, 
+          text: `SUCCESS: '${file.name}' has been secured and analyzed.`, 
           type: 'success' 
         });
-        // Refresh the document list immediately to show the new file
+        
+        // Construct the new document object to select it locally
+        const newDoc = {
+          _id: data.documentId,
+          filename: file.name,
+          uploaded_at: new Date(),
+          intelligence: data.intelligence
+        };
+        
+        setSelectedDoc(newDoc);
         await fetchDocuments();
       } else {
-        setUploadMsg({ 
-          text: `[ERROR] Failed to save '${file.name}': ${data.message}`, 
-          type: 'error' 
-        });
+        setUploadMsg({ text: `[ERROR] Failed to save '${file.name}': ${data.message}`, type: 'error' });
       }
     } catch (err: any) {
-      setUploadMsg({ 
-        text: `[ERROR] Network drop during upload of '${file.name}': ${err.message}`, 
-        type: 'error' 
-      });
+      setUploadMsg({ text: `[ERROR] Network drop during upload: ${err.message}`, type: 'error' });
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = "";
-      
-      // Auto dismiss success message after 5 seconds
       setTimeout(() => setUploadMsg(null), 5000);
     }
   };
 
-  const formatBytes = (bytes: number, decimals = 2) => {
-    if (!+bytes) return "0 Bytes";
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileUpload(file);
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-end mb-2">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Secure Documents</h1>
-          <p className="text-navy-400 text-sm font-medium tracking-wide">
-            Access and manage highly classified intellectual assets.
-          </p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
-          <button 
+    <div className="flex flex-col h-full -m-6">
+      {/* Header Area */}
+      <div className="px-8 py-6 border-b border-navy-700/50 bg-navy-900/20">
+        <h1 className="text-2xl font-black text-white tracking-tight">Secure Documents Intelligence</h1>
+        <p className="text-navy-400 text-xs font-bold uppercase tracking-widest mt-1">Classified Workspace</p>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Main Content Scrollable */}
+        <div className="flex-1 overflow-y-auto p-8 space-y-8">
+          
+          {/* Drag & Drop Area */}
+          <div 
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center px-4 py-2 bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-600 hover:to-blue-500 text-white text-xs font-bold rounded shadow-lg shadow-blue-900/50 border border-blue-500/50 transition-all uppercase tracking-widest"
+            className={`
+              relative group cursor-pointer border-2 border-dashed rounded-2xl p-12 transition-all duration-300
+              flex flex-col items-center justify-center space-y-4
+              ${isDragging ? 'bg-blue-600/10 border-blue-500 scale-[1.01]' : 'bg-navy-800/20 border-navy-700 hover:border-navy-600 hover:bg-navy-800/30'}
+            `}
           >
-            <Upload className="w-4 h-4 mr-2" /> Upload New File
-          </button>
-          <button onClick={fetchDocuments} className="px-4 py-2 bg-navy-800 hover:bg-navy-700 rounded text-xs font-bold uppercase tracking-widest text-blue-400 flex items-center border border-navy-600 transition-colors shadow">
-            {loading ? <RefreshCcw className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCcw className="w-4 h-4 mr-2" />} Sync Vault
-          </button>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])} 
+            />
+            <div className="w-16 h-16 rounded-full bg-blue-600/10 flex items-center justify-center border border-blue-500/20 group-hover:scale-110 transition-transform">
+                <Upload className="w-8 h-8 text-blue-500" />
+            </div>
+            <div className="text-center">
+                <h3 className="text-xl font-bold text-white mb-1">Drag & Drop Intel Documents</h3>
+                <p className="text-navy-400 text-xs font-medium tracking-wide">or click to browse local secure files (PDF, TXT)</p>
+            </div>
+          </div>
+
+          {/* Recent Uploads Section */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center px-2">
+              <h2 className="text-lg font-bold text-white tracking-tight">Recent Uploads</h2>
+              <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20">
+                {documents.length} Files
+              </span>
+            </div>
+
+            {loading ? (
+               <div className="p-12 text-center text-navy-500 font-bold uppercase tracking-widest text-xs animate-pulse">
+                  Synchronizing with Vault...
+               </div>
+            ) : documents.length === 0 ? (
+               <div className="p-12 text-center rounded-2xl border-2 border-dashed border-navy-700/50 text-navy-500 font-bold uppercase tracking-widest text-xs">
+                  No Intel Assets Indexed
+               </div>
+            ) : (
+              <div className="space-y-3">
+                {documents.map((doc) => (
+                  <div 
+                    key={doc._id} 
+                    className={`
+                      group flex items-center justify-between p-5 rounded-2xl border transition-all duration-300
+                      ${selectedDoc?._id === doc._id ? 'bg-blue-600/10 border-blue-500/50 shadow-lg shadow-blue-900/20' : 'bg-navy-800/30 border-navy-700/50 hover:bg-navy-800/50 hover:border-navy-600'}
+                    `}
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className={`
+                        w-12 h-12 rounded-xl flex items-center justify-center border transition-all
+                        ${selectedDoc?._id === doc._id ? 'bg-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/30' : 'bg-navy-900/50 border-navy-700 text-blue-400'}
+                      `}>
+                        <FileText className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-sm text-white group-hover:text-blue-100 transition-colors">{doc.filename}</h4>
+                        <p className="text-[10px] text-navy-400 font-bold tracking-widest uppercase mt-0.5">
+                          {new Date(doc.uploaded_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <button 
+                      onClick={() => setSelectedDoc(doc)}
+                      className={`
+                        px-5 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all
+                        ${selectedDoc?._id === doc._id ? 'bg-blue-600 text-white' : 'bg-navy-900/50 text-blue-400 border border-navy-700 hover:bg-navy-800'}
+                      `}
+                    >
+                      View Summary
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Intelligence Panel */}
+        <div className="w-[450px] border-l border-navy-700/50 bg-navy-900/30 flex flex-col p-8 overflow-y-auto relative">
+          {!selectedDoc ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center space-y-4 opacity-30 select-none">
+                <FileSearch className="w-20 h-20 text-navy-400 stroke-1" />
+                <div className="space-y-1">
+                    <h3 className="text-xl font-bold text-white uppercase tracking-tighter">No Active Intel</h3>
+                    <p className="text-xs text-navy-400 font-bold uppercase tracking-widest max-w-[200px]">Select a document to begin AI intelligence processing</p>
+                </div>
+            </div>
+          ) : (
+            <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-8">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                    <h2 className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">AI Intelligence Summary</h2>
+                    <h3 className="text-2xl font-black text-white tracking-tight leading-none truncate max-w-[300px]">{selectedDoc.filename}</h3>
+                </div>
+                <button onClick={() => setSelectedDoc(null)} className="p-2 rounded-lg bg-navy-800 hover:bg-navy-700 text-navy-400 transition-colors">
+                    <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Document Summary */}
+              <div className="space-y-4">
+                  <p className="text-sm italic text-navy-200 leading-relaxed font-medium">
+                    {selectedDoc.intelligence?.summary || "Analyzing intelligence assets... Initializing extraction protocols."}
+                  </p>
+              </div>
+
+              {/* Key Decisions */}
+              <div className="bg-blue-600/10 rounded-2xl border border-blue-500/20 p-6 space-y-4 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                      <CheckCircle className="w-16 h-16 text-blue-400" />
+                  </div>
+                  <h4 className="flex items-center text-xs font-black text-blue-100 uppercase tracking-widest">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-3 animate-pulse"></div>
+                    Key Decisions
+                  </h4>
+                  <ul className="space-y-3 relative z-10">
+                    {selectedDoc.intelligence?.key_decisions?.map((item: string, i: number) => (
+                      <li key={i} className="flex gap-3 text-xs font-semibold text-blue-200/80 leading-relaxed">
+                        <span className="text-blue-400 mt-1.5">•</span>
+                        <span>{item}</span>
+                      </li>
+                    )) || <li className="text-xs text-navy-500 animate-pulse">Processing decision vectors...</li>}
+                  </ul>
+              </div>
+
+              {/* Action Items */}
+              <div className="bg-emerald-500/10 rounded-2xl border border-emerald-500/20 p-6 space-y-4 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                      <Database className="w-16 h-16 text-emerald-400" />
+                  </div>
+                  <h4 className="flex items-center text-xs font-black text-emerald-100 uppercase tracking-widest">
+                    <Check className="w-4 h-4 text-emerald-500 mr-2" />
+                    Action Items
+                  </h4>
+                  <div className="space-y-3 relative z-10">
+                    {selectedDoc.intelligence?.action_items?.map((item: string, i: number) => (
+                      <div key={i} className="flex gap-4 p-3 rounded-xl bg-navy-950/40 border border-emerald-500/10">
+                        <span className="text-xs font-black text-emerald-500/70">{i + 1}.</span>
+                        <p className="text-xs font-semibold text-emerald-100/90 leading-relaxed">{item}</p>
+                      </div>
+                    )) || <div className="text-xs text-navy-500 animate-pulse">Generating action parameters...</div>}
+                  </div>
+              </div>
+
+              {/* Grid for Stakeholders and Deadlines */}
+              <div className="grid grid-cols-2 gap-4">
+                  {/* Stakeholders */}
+                  <div className="bg-amber-500/10 rounded-2xl border border-amber-500/20 p-5 space-y-3">
+                      <h4 className="flex items-center text-[10px] font-black text-amber-200 uppercase tracking-widest">
+                        <Database className="w-3.5 h-3.5 mr-2 text-amber-500" />
+                        Stakeholders
+                      </h4>
+                      <div className="space-y-2">
+                        {selectedDoc.intelligence?.stakeholders?.map((s: string, i: number) => (
+                          <div key={i} className="text-[11px] font-bold text-amber-100/80 bg-amber-950/30 px-2 py-1 rounded border border-amber-500/10">
+                            {s}
+                          </div>
+                        )) || <span className="text-[10px] text-navy-500 italic">No stakeholders identified</span>}
+                      </div>
+                  </div>
+
+                  {/* Deadlines */}
+                  <div className="bg-purple-500/10 rounded-2xl border border-purple-500/20 p-5 space-y-3">
+                      <h4 className="flex items-center text-[10px] font-black text-purple-200 uppercase tracking-widest">
+                        <Calendar className="w-3.5 h-3.5 mr-2 text-purple-500" />
+                        Deadlines
+                      </h4>
+                      <div className="space-y-2">
+                        {selectedDoc.intelligence?.deadlines?.map((d: any, i: number) => (
+                          <div key={i} className="space-y-0.5">
+                            <div className="text-[10px] font-black text-purple-400">{d.date}</div>
+                            <div className="text-[10px] font-bold text-purple-100/70 truncate">{d.task}</div>
+                          </div>
+                        )) || <span className="text-[10px] text-navy-500 italic">No critical deadlines</span>}
+                      </div>
+                  </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
+      {/* Upload Notification Overlay */}
       {uploadMsg && (
-        <div className={`p-4 rounded-xl border flex items-center space-x-3 shadow-lg animate-in fade-in slide-in-from-top-4 duration-500 ${
-          uploadMsg.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 
-          uploadMsg.type === 'error' ? 'bg-red-500/10 border-red-500/30 text-red-400' :
-          'bg-blue-500/10 border-blue-500/30 text-blue-400'
-        }`}>
-          {uploadMsg.type === 'success' ? <Check className="w-5 h-5 flex-shrink-0" /> : 
-           uploadMsg.type === 'error' ? <RefreshCcw className="w-5 h-5 flex-shrink-0" /> : 
-           <RefreshCcw className="w-5 h-5 flex-shrink-0 animate-spin" />}
-          <p className="text-sm font-bold tracking-wide">{uploadMsg.text}</p>
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[1000] animate-in slide-in-from-bottom-8 fade-in duration-500">
+           <div className={`px-6 py-4 rounded-2xl border flex items-center space-x-4 shadow-2xl backdrop-blur-xl ${
+              uploadMsg.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-100' : 
+              uploadMsg.type === 'error' ? 'bg-red-500/10 border-red-500/40 text-red-100' :
+              'bg-blue-500/10 border-blue-500/40 text-blue-100'
+           }`}>
+              {uploadMsg.type === 'success' ? <Check className="w-5 h-5 text-emerald-400" /> : 
+               uploadMsg.type === 'error' ? <ShieldAlert className="w-5 h-5 text-red-400" /> : 
+               <RefreshCcw className="w-5 h-5 text-blue-400 animate-spin" />}
+              <span className="text-sm font-bold tracking-tight">{uploadMsg.text}</span>
+           </div>
         </div>
       )}
-
-      <div className="glass-card shadow-2xl border-navy-700/50 overflow-hidden relative">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 via-blue-400 to-blue-600"></div>
-        
-        <div className="p-4 border-b border-navy-700/50 bg-navy-900/30 flex justify-between items-center">
-            <div className="flex items-center text-blue-100">
-                <Database className="w-5 h-5 mr-2 text-blue-400" /> 
-                <h2 className="text-lg font-bold">Database Index: ARIA_db.documents</h2>
-            </div>
-            <div className="relative">
-                <Search className="w-4 h-4 text-navy-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input type="text" placeholder="Filter documents..." className="bg-navy-800/80 border border-navy-600 focus:border-blue-500 text-sm rounded-lg pl-9 pr-4 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-navy-500 w-64 transition-all" />
-            </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-navy-800/30 text-xs uppercase tracking-widest text-navy-300 border-b border-navy-700/50">
-                <th className="px-6 py-4 font-bold">File Name</th>
-                <th className="px-6 py-4 font-bold">Type</th>
-                <th className="px-6 py-4 font-bold">Size</th>
-                <th className="px-6 py-4 font-bold">Upload Date</th>
-                <th className="px-6 py-4 font-bold">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-navy-400 font-bold bg-navy-800/10">
-                    <div className="flex justify-center items-center">
-                        <RefreshCcw className="w-5 h-5 mr-3 animate-spin text-blue-500" />
-                        INDEXING VAULT...
-                    </div>
-                  </td>
-                </tr>
-              ) : documents.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-navy-400 font-bold bg-navy-800/10 border-dashed border-b border-navy-700/50">
-                    No documents stored in the database yet. Use the upload button to ingest files.
-                  </td>
-                </tr>
-              ) : (
-                documents.map((doc) => (
-                  <tr key={doc._id} className="border-b border-navy-700/30 hover:bg-blue-600-[0.03] transition-colors group">
-                    <td className="px-6 py-4 flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-lg bg-blue-900/30 border border-blue-500/20 flex items-center justify-center group-hover:bg-blue-600/20 transition-colors">
-                          <FileText className="w-4 h-4 text-blue-400" />
-                      </div>
-                      <span className="text-sm font-semibold text-gray-200 group-hover:text-white transition-colors">
-                        {doc.filename}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-xs text-navy-300 uppercase tracking-wider">
-                        {doc.mime_type || "Unknown"}
-                    </td>
-                    <td className="px-6 py-4 text-xs font-mono text-navy-300">
-                      {formatBytes(doc.file_size)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center text-xs text-navy-300">
-                        <Calendar className="w-3 h-3 mr-2 opacity-50" />
-                        {new Date(doc.uploaded_at).toLocaleString()}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        {doc.status || "PROCESSED"}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
   );
 }
