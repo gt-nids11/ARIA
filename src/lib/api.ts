@@ -71,12 +71,12 @@ async function apiCall(url: string, options: any = {}, isFormData = false) {
 }
 
 export const auth = {
-    login: async (email: string, password: string) => {
+    login: async (username: string, password: string) => {
         // We use standard fetch here because apiCall requires a valid token
         const res = await fetch(`${BASE_URL}/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ username, password })
         });
         
         if (res.status === 429) {
@@ -96,12 +96,12 @@ export const auth = {
         }
         return data;
     },
-    register: async (name: string, email: string, password: string, role: string) => {
+    register: async (name: string, username: string, password: string, role: string) => {
         // Register doesn't strictly need auth but following pattern
         const res = await fetch(`${BASE_URL}/auth/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, email, password, role })
+            body: JSON.stringify({ name, username, password, role })
         });
         if (res.status === 429) {
             throw new Error('Too many requests. Please wait and try again.');

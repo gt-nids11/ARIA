@@ -4,7 +4,7 @@ import { AlertTriangle, Clock, Activity, FileText, CheckCircle, MessageSquare, S
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/components/AuthContext";
 import { useRouter } from "next/navigation";
-import { dashboard, alerts } from "../lib/api";
+import { dashboard, alerts, documents } from "../lib/api";
 
 const DEFAULT_BRIEF = `MORNING TO-DO LIST:
 
@@ -14,22 +14,19 @@ const DEFAULT_BRIEF = `MORNING TO-DO LIST:
 4. 05:00 PM - Finalize Level-4 clearance audit logs.`;
 
 export default function Dashboard() {
-  const { currentOfficial } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [stats, setStats] = useState({ pending_alerts: 0, todays_meetings: 0, open_complaints: 0, drafts_saved: 0 });
   const [brief, setBrief] = useState(DEFAULT_BRIEF);
   const [activeAlerts, setActiveAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [name, setName] = useState("Official");
-  const [isAuthed, setIsAuthed] = useState(false);
   
   // New state for file upload notifications
   const [uploadMsg, setUploadMsg] = useState<{text: string, type: 'info' | 'success'} | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
-    setName(localStorage.getItem("name") || "Official");
     try {
       const [statsRes, briefRes, alertsRes] = await Promise.all([
         dashboard.getStats(),
@@ -60,17 +57,9 @@ export default function Dashboard() {
     setUploadMsg({ text: `Intercepting and analyzing '${file.name}'...`, type: 'info' });
     
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const data = await documents.upload(file);
 
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.success) {
+      if (data && data.success) {
         setUploadMsg({ 
           text: `File uploaded and stored in the data base`, 
           type: 'success' 
@@ -78,7 +67,7 @@ export default function Dashboard() {
         setStats(prev => ({ ...prev, drafts_saved: prev.drafts_saved + 1 }));
       } else {
         setUploadMsg({ 
-          text: `[ERROR] Failed to save to database: ${data.message}`, 
+          text: `[ERROR] Failed to save to database`, 
           type: 'info' 
         });
       }
@@ -93,15 +82,8 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    // Check if user is authenticated
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-    setIsAuthed(true);
     fetchData();
-  }, [router]);
+  }, []);
 
   const resolveAlert = async (id: number) => {
     try {
@@ -112,16 +94,11 @@ export default function Dashboard() {
     }
   };
 
-  // Prevent rendering dashboard if not authenticated
-  if (!isAuthed) {
-    return null;
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-end mb-2">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Good Morning, {currentOfficial?.name || name}</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Good Morning, {user?.name || "Official"}</h1>
           <p className="text-navy-400 text-sm font-medium tracking-wide">
             {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>

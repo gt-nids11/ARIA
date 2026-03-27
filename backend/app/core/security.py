@@ -77,15 +77,15 @@ def decode_token(token: str) -> dict:
 def invalidate_token(token: str):
     token_blacklist.add(token)
 
-def record_failed_attempt(email: str):
+def record_failed_attempt(username: str):
     current_time = time.time()
-    failed_attempts[email] = [t for t in failed_attempts[email] if current_time - t <= LOCKOUT_DURATION]
-    failed_attempts[email].append(current_time)
+    failed_attempts[username] = [t for t in failed_attempts[username] if current_time - t <= LOCKOUT_DURATION]
+    failed_attempts[username].append(current_time)
 
-def is_account_locked(email: str) -> bool:
+def is_account_locked(username: str) -> bool:
     current_time = time.time()
-    valid_attempts = [t for t in failed_attempts[email] if current_time - t <= LOCKOUT_DURATION]
+    valid_attempts = [t for t in failed_attempts[username] if current_time - t <= LOCKOUT_DURATION]
     return len(valid_attempts) >= LOCKOUT_THRESHOLD
 
-def clear_failed_attempts(email: str):
-    failed_attempts[email] = []
+def clear_failed_attempts(username: str):
+    failed_attempts[username] = []

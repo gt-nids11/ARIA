@@ -1,122 +1,220 @@
 "use client";
-import { useState } from "react";
-import { auth } from "../../lib/api";
-import { ShieldAlert, Fingerprint, Lock, Loader2, RefreshCcw } from "lucide-react";
-import { useRouter } from "next/navigation";
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/AuthContext';
+import { auth as authApi } from '@/lib/api';
+import { Shield, Lock, User, UserPlus, Loader2, Info } from 'lucide-react';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const router = useRouter();
+    const [loginUser, setLoginUser] = useState('');
+    const [loginPass, setLoginPass] = useState('');
+    const [regName, setRegName] = useState('');
+    const [regUser, setRegUser] = useState('');
+    const [regPass, setRegPass] = useState('');
+    
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+    const [isLoginLoading, setIsLoginLoading] = useState(false);
+    const [isRegLoading, setIsRegLoading] = useState(false);
+    
+    const { login } = useAuth();
+    const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setSuccess('');
+        setIsLoginLoading(true);
 
-    try {
-      // BYPASS: Creating a structurally valid dummy JWT that never expires
-      // Header: {"alg":"HS256","typ":"JWT"}
-      // Payload: {"sub":"admin","exp":4070908800}
-      const dummyToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6NDA3MDkwODgwMH0.dummy_signature";
-      
-      localStorage.setItem("token", dummyToken);
-      localStorage.setItem("name", email.split('@')[0] || "Official");
-      
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 600);
-    } catch (err: any) {
-      setError(err.message || "Invalid credentials. Unauthorized access attempt logged.");
-    } finally {
-      if (!error) setLoading(false);
-    }
-  };
+        try {
+            const data = await authApi.login(loginUser, loginPass);
+            if (data && data.access_token) {
+                login(data.access_token, {
+                    id: data.user_id,
+                    name: data.name,
+                    username: data.username,
+                    role: data.role,
+                    clearance: data.clearance
+                });
+            }
+        } catch (err: any) {
+            if (err.message.includes('404') || err.message.toLowerCase().includes('not found')) {
+                setError('PERSONNEL RECORD NOT FOUND. PLEASE REGISTER IN THE ACCOUNTS REGISTRY SECTION TO THE RIGHT.');
+            } else {
+                setError(err.message || 'AUTHORIZATION FAILED');
+            }
+        } finally {
+            setIsLoginLoading(false);
+        }
+    };
 
-  return (
-    <div className="absolute inset-0 flex items-center justify-center bg-navy-900 overflow-hidden">
-      {/* Background Animated Gradient Grid */}
-      <div className="absolute inset-0 opacity-20 pointer-events-none" 
-           style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(59, 130, 246, 0.4) 1px, transparent 0)', backgroundSize: '40px 40px' }} 
-      />
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50 blur"></div>
+    const handleRegister = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setSuccess('');
+        setIsRegLoading(true);
 
-      <div className="z-10 w-full max-w-[440px] px-6">
-        <div className="glass-card shadow-2xl shadow-blue-900/40 border border-navy-700 p-10 relative overflow-hidden group">
-          
-          {/* Top Edge Accent */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 via-blue-400 to-blue-600"></div>
+        try {
+            await authApi.register(regName, regUser, regPass, 'viewer');
+            setSuccess('REGISTRATION SUCCESSFUL. LEVEL-1 CLEARANCE GRANTED. YOU MAY NOW AUTHORIZE ACCESS.');
+            setLoginUser(regUser);
+            setRegName('');
+            setRegUser('');
+            setRegPass('');
+        } catch (err: any) {
+            setError(err.message || 'REGISTRATION FAILED');
+        } finally {
+            setIsRegLoading(false);
+        }
+    };
 
-          <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-900 flex items-center justify-center mb-6 shadow-lg shadow-blue-500/20 border border-blue-400/30 group-hover:scale-105 transition-transform duration-500">
-              <ShieldAlert className="w-8 h-8 text-blue-100" />
+    return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-navy-950 px-4 py-12 relative overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.05)_0%,transparent_70%)]"></div>
+            
+            <div className="text-center mb-12 relative z-10">
+                <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-blue-600/10 mb-6 border border-blue-500/20 shadow-2xl backdrop-blur-sm">
+                    <Shield className="w-12 h-12 text-blue-500" />
+                </div>
+                <h1 className="text-4xl font-black text-white tracking-widest uppercase">ARIA Protocol Entry</h1>
+                <p className="mt-3 text-navy-400 font-bold tracking-widest uppercase text-xs">Secure Personnel Authentication & Registry System</p>
             </div>
-            <h1 className="text-3xl font-black text-white tracking-widest uppercase mb-1">ARIA Interface</h1>
-            <p className="text-xs text-blue-400/80 uppercase tracking-[0.2em] font-bold">Classified Workspace</p>
-          </div>
 
-          <form onSubmit={handleLogin} className="space-y-6">
             {error && (
-              <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-xs text-red-400 font-bold uppercase tracking-wider text-center animate-pulse">
-                {error}
-              </div>
+                <div className="max-w-4xl w-full mb-8 bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded-2xl text-xs font-black uppercase tracking-widest text-center animate-pulse z-10 shadow-lg shadow-red-500/5">
+                    [SYSTEM ERROR] {error}
+                </div>
             )}
 
-            <div className="space-y-4">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Fingerprint className="h-5 w-5 text-navy-400" />
+            {success && (
+                <div className="max-w-4xl w-full mb-8 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 p-4 rounded-2xl text-xs font-black uppercase tracking-widest text-center z-10 shadow-lg shadow-emerald-500/5">
+                    [SYSTEM NOTIFICATION] {success}
                 </div>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-navy-800/50 border border-navy-600 hover:border-blue-500/50 focus:border-blue-500 rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors shadow-inner placeholder-navy-500"
-                  placeholder="Official ID or Clearance Email"
-                  required
-                />
-              </div>
+            )}
 
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-navy-400" />
+            <div className="max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                {/* Login Section */}
+                <div className="glass-card p-10 space-y-8 border-t-4 border-t-blue-500 shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                        <Lock className="w-32 h-32 text-white" />
+                    </div>
+                    
+                    <div>
+                        <h2 className="text-2xl font-black text-white tracking-tight uppercase flex items-center">
+                            <Lock className="w-6 h-6 mr-3 text-blue-500" /> Authorized Login
+                        </h2>
+                        <p className="text-navy-400 text-xs font-bold uppercase tracking-widest mt-1">Existing Personnel Credentials</p>
+                    </div>
+
+                    <form onSubmit={handleLogin} className="space-y-6">
+                        <div className="space-y-4">
+                            <div className="relative group">
+                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500 group-focus-within:text-blue-500 transition-colors" />
+                                <input
+                                    type="text"
+                                    required
+                                    value={loginUser}
+                                    onChange={(e) => setLoginUser(e.target.value)}
+                                    className="w-full bg-navy-900/50 border border-navy-700/50 rounded-2xl p-4 pl-12 text-sm text-white placeholder:text-navy-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all shadow-inner"
+                                    placeholder="Username"
+                                />
+                            </div>
+                            <div className="relative group">
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500 group-focus-within:text-blue-500 transition-colors" />
+                                <input
+                                    type="password"
+                                    required
+                                    value={loginPass}
+                                    onChange={(e) => setLoginPass(e.target.value)}
+                                    className="w-full bg-navy-900/50 border border-navy-700/50 rounded-2xl p-4 pl-12 text-sm text-white placeholder:text-navy-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all shadow-inner"
+                                    placeholder="Clearance Key"
+                                />
+                            </div>
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={isLoginLoading}
+                            className="w-full py-4 px-6 bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-600 hover:to-blue-400 text-white font-black rounded-2xl transition-all shadow-lg hover:shadow-blue-500/25 flex items-center justify-center uppercase tracking-widest border-t border-blue-400/30 active:scale-[0.98]"
+                        >
+                            {isLoginLoading ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                'Authorize Access'
+                            )}
+                        </button>
+                    </form>
                 </div>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-navy-800/50 border border-navy-600 hover:border-blue-500/50 focus:border-blue-500 rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors shadow-inner placeholder-navy-500"
-                  placeholder="Security Passkey"
-                  required
-                />
-              </div>
+
+                {/* Signup Section */}
+                <div className="glass-card p-10 space-y-8 border-t-4 border-t-emerald-500 shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                        <UserPlus className="w-32 h-32 text-white" />
+                    </div>
+
+                    <div>
+                        <h2 className="text-2xl font-black text-white tracking-tight uppercase flex items-center">
+                            <UserPlus className="w-6 h-6 mr-3 text-emerald-500" /> Accounts Registry
+                        </h2>
+                        <p className="text-navy-400 text-xs font-bold uppercase tracking-widest mt-1">New Personnel Enrollment</p>
+                    </div>
+
+                    <form onSubmit={handleRegister} className="space-y-6">
+                        <div className="space-y-4">
+                            <div className="relative group">
+                                <Info className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500 group-focus-within:text-emerald-500 transition-colors" />
+                                <input
+                                    type="text"
+                                    required
+                                    value={regName}
+                                    onChange={(e) => setRegName(e.target.value)}
+                                    className="w-full bg-navy-900/50 border border-navy-700/50 rounded-2xl p-4 pl-12 text-sm text-white placeholder:text-navy-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all shadow-inner"
+                                    placeholder="Full Name"
+                                />
+                            </div>
+                            <div className="relative group">
+                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500 group-focus-within:text-emerald-500 transition-colors" />
+                                <input
+                                    type="text"
+                                    required
+                                    value={regUser}
+                                    onChange={(e) => setRegUser(e.target.value)}
+                                    className="w-full bg-navy-900/50 border border-navy-700/50 rounded-2xl p-4 pl-12 text-sm text-white placeholder:text-navy-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all shadow-inner"
+                                    placeholder="New Username"
+                                />
+                            </div>
+                            <div className="relative group">
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500 group-focus-within:text-emerald-500 transition-colors" />
+                                <input
+                                    type="password"
+                                    required
+                                    value={regPass}
+                                    onChange={(e) => setRegPass(e.target.value)}
+                                    className="w-full bg-navy-900/50 border border-navy-700/50 rounded-2xl p-4 pl-12 text-sm text-white placeholder:text-navy-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all shadow-inner"
+                                    placeholder="Set Clearance Pass"
+                                />
+                            </div>
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={isRegLoading}
+                            className="w-full py-4 px-6 bg-gradient-to-r from-emerald-700 to-emerald-500 hover:from-emerald-600 hover:to-emerald-400 text-white font-black rounded-2xl transition-all shadow-lg hover:shadow-emerald-500/25 flex items-center justify-center uppercase tracking-widest border-t border-emerald-400/30 active:scale-[0.98]"
+                        >
+                            {isRegLoading ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                'Execute Registration'
+                            )}
+                        </button>
+                    </form>
+                </div>
             </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 px-4 bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-600 hover:to-blue-500 border border-blue-500/50 text-white font-bold text-xs tracking-[0.1em] uppercase rounded-lg shadow-lg shadow-blue-900/50 hover:shadow-blue-900/80 transition-all flex items-center justify-center disabled:opacity-75 disabled:cursor-not-allowed group/btn"
-            >
-              {loading ? (
-                <>
-                  <RefreshCcw className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" />
-                  AUTHENTICATING...
-                </>
-              ) : (
-                <>
-                  INITIALIZE SESSION
-                </>
-              )}
-            </button>
-          </form>
-
-          <p className="mt-8 text-center text-[10px] text-navy-500 uppercase tracking-widest">
-            Unauthorized access is strictly monitored.
-          </p>
+            
+            <div className="mt-12 flex items-center space-x-2 text-[10px] text-navy-600 uppercase font-black tracking-[0.3em] relative z-10">
+                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                <span>Server Online: ARIA Intelligence v2.0 - Authenticated Node</span>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }

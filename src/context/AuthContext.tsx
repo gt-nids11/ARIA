@@ -1,26 +1,26 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
-export type User = {
+interface User {
     id: number;
     name: string;
-    username: string;
+    email: string;
     role: string;
     clearance: number;
-};
+}
 
-type AuthContextType = {
+interface AuthContextType {
     user: User | null;
     token: string | null;
     login: (token: string, userData: User) => void;
     logout: () => void;
     isLoading: boolean;
-};
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -28,18 +28,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const pathname = usePathname();
 
     useEffect(() => {
-        const storedToken = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
+        const storedToken = localStorage.getItem('aria_token');
+        const storedUser = localStorage.getItem('aria_user');
         
         if (storedToken && storedUser) {
-            try {
-                setToken(storedToken);
-                setUser(JSON.parse(storedUser));
-            } catch (e) {
-                console.error("Failed to parse stored user", e);
-                localStorage.removeItem('aria_token');
-                localStorage.removeItem('aria_user');
-            }
+            setToken(storedToken);
+            setUser(JSON.parse(storedUser));
         }
         setIsLoading(false);
     }, []);
@@ -56,16 +50,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const login = (newToken: string, userData: User) => {
         setToken(newToken);
         setUser(userData);
-        localStorage.setItem('token', newToken);
-        localStorage.setItem('user', JSON.stringify(userData));
-        router.push('/');
+        localStorage.setItem('aria_token', newToken);
+        localStorage.setItem('aria_user', JSON.stringify(userData));
     };
 
     const logout = () => {
         setToken(null);
         setUser(null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        localStorage.removeItem('aria_token');
+        localStorage.removeItem('aria_user');
         router.push('/login');
     };
 

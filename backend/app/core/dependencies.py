@@ -22,10 +22,13 @@ def require_admin(user=Depends(get_current_user)):
         )
     return user
 
-def require_leader_or_admin(user=Depends(get_current_user)):
-    if user.get("role") not in ["admin", "leader"]:
-        raise HTTPException(
-            status_code=403,
-            detail="Leader or Admin access required"
-        )
-    return user
+def require_clearance(min_level: int):
+    def dependency(user=Depends(get_current_user)):
+        user_clearance = user.get("clearance", 0)
+        if user_clearance < min_level:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Clearance level {min_level} required. Your level: {user_clearance}"
+            )
+        return user
+    return dependency

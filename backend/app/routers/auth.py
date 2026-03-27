@@ -19,9 +19,9 @@ limiter = Limiter(key_func=get_remote_address)
 
 class RegisterRequest(BaseModel):
     name: str
-    email: EmailStr
+    username: str
     password: str
-    role: UserRole = UserRole.AIDE
+    role: UserRole = UserRole.VIEWER
     
     @validator('name')
     def validate_name(cls, v):
@@ -35,26 +35,27 @@ class RegisterRequest(BaseModel):
         return v
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    username: str
     password: str
 
 @router.post("/register")
-@limiter.limit("3/hour")
+@limiter.limit("100/hour")
 def register(request: Request, user: RegisterRequest, db: Session = Depends(get_db)):
     is_valid, reason = validate_password(user.password)
     if not is_valid:
         raise HTTPException(status_code=400, detail=reason)
         
-    db_user = db.query(User).filter(User.email == user.email).first()
+    db_user = db.query(User).filter(User.username == user.username).first()
     if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="Username already registered")
         
     hashed_password = hash_password(user.password)
     new_user = User(
         name=user.name,
-        email=user.email,
+        username=user.username,
         hashed_password=hashed_password,
-        role=user.role
+        role=user.role,
+        clearance_level=1
     )
     db.add(new_user)
     db.commit()
@@ -65,7 +66,7 @@ def register(request: Request, user: RegisterRequest, db: Session = Depends(get_
         user_name=new_user.name,
         action="REGISTER",
         module="AUTH",
-        details=f"New user: {user.email}",
+        details=f"New user: {user.username}",
         ip_address=request.client.host if request.client else "Unknown"
     )
     db.add(audit)
@@ -74,36 +75,43 @@ def register(request: Request, user: RegisterRequest, db: Session = Depends(get_
     return {"message": "Account created successfully", "user_id": new_user.id}
 
 @router.post("/login")
-@limiter.limit("5/minute")
+@limiter.limit("1000/minute")
 def login(request: Request, user_credentials: LoginRequest, db: Session = Depends(get_db)):
-    if is_account_locked(user_credentials.email):
+    if is_account_locked(user_credentials.username):
         raise HTTPException(status_code=429, detail="Too many failed attempts. Account locked for 5 minutes.")
         
-    user = db.query(User).filter(User.email == user_credentials.email).first()
+    user = db.query(User).filter(User.username == user_credentials.username).first()
     
-    if not user or not verify_password(user_credentials.password, user.hashed_password):
-        record_failed_attempt(user_credentials.email)
+    if not user:
+        raise HTTPException(
+            status_code=404, 
+            detail="User account not found. Personnel must register for a new entry before authorizing access."
+        )
+
+    if not verify_password(user_credentials.password, user.hashed_password):
+        record_failed_attempt(user_credentials.username)
         
         audit = AuditLog(
-            user_id=user.id if user else 0,
-            user_name=user.name if user else "Unknown",
+            user_id=user.id,
+            user_name=user.name,
             action="FAILED_LOGIN",
             module="AUTH",
-            details=f"Failed login attempt for {user_credentials.email}",
+            details=f"Failed password for {user_credentials.username}",
             ip_address=request.client.host if request.client else "Unknown"
         )
         db.add(audit)
         db.commit()
         
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+        raise HTTPException(status_code=401, detail="Invalid clearance credentials")
         
-    clear_failed_attempts(user_credentials.email)
+    clear_failed_attempts(user_credentials.username)
     
     access_token = create_access_token(data={
         "sub": str(user.id),
         "role": user.role,
         "name": user.name,
-        "email": user.email
+        "username": user.username,
+        "clearance": user.clearance_level
     })
     
     audit = AuditLog(
@@ -122,7 +130,8 @@ def login(request: Request, user_credentials: LoginRequest, db: Session = Depend
         "token_type": "bearer",
         "name": user.name,
         "role": user.role,
-        "email": user.email
+        "clearance": user.clearance_level,
+        "username": user.username
     }
 
 @router.post("/logout")
@@ -151,7 +160,8 @@ def read_users_me(current_user_dict: dict = Depends(get_current_user), db: Sessi
     return {
         "id": user.id,
         "name": user.name,
-        "email": user.email,
+        "username": user.username,
         "role": user.role,
+        "clearance": user.clearance_level,
         "created_at": user.created_at
     }

@@ -10,7 +10,7 @@ import {
 
 function DocumentsContent() {
   const router = useRouter();
-  const { currentOfficial } = useAuth();
+  const { user } = useAuth();
   
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,15 +19,9 @@ function DocumentsContent() {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Authenticate access
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
-    } else {
-      fetchDocuments();
-    }
-  }, [router]);
+    fetchDocuments();
+  }, []);
 
   const fetchDocuments = async () => {
     setLoading(true);
@@ -329,9 +323,5 @@ function DocumentsContent() {
 }
 
 export default function DocumentsPage() {
-    return (
-        <AuthProvider>
-            <DocumentsContent />
-        </AuthProvider>
-    );
+    return <DocumentsContent />;
 }

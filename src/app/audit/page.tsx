@@ -1,27 +1,32 @@
 "use client";
-import { Download, Search, ShieldCheck, Activity, Users, Database } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Download, ShieldCheck, Activity, Users, Database } from 'lucide-react';
+import { audit } from '@/lib/api';
+import { useAuth } from '@/components/AuthContext';
 
 export default function AuditLog() {
   const [logs, setLogs] = useState<any[]>([]);
+  const { user } = useAuth();
 
   useEffect(() => {
-    fetch('/api/audit').then(r => r.json()).then(d => setLogs(d));
+    fetchLogs();
   }, []);
 
-  const exportCSV = () => {
-    const header = ['ID,User,Action,Module,Details,IP Address,Created At'];
-    const rows = logs.map(l => l.id + ',' + l.user_name + ',' + l.action + ',' + l.module + ',"' + l.details + '",' + l.ip_address + ',' + l.created_at);
-    const csvContent = header.concat(rows).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'audit_logs.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const fetchLogs = async () => {
+    try {
+      const data = await audit.list();
+      setLogs(data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const exportCSV = async () => {
+    try {
+      await audit.export();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (

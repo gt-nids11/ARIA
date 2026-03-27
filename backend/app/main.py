@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base, engine
 from app.core.config import settings
-from app.routers import auth, documents, meetings, speeches, complaints, alerts, schedule, dashboard, audit
+from app.routers import auth, documents, meetings, speeches, complaints, alerts, schedule, dashboard, audit, admin
 from app.models.user import User
 from app.core.security import hash_password
 from sqlalchemy.orm import Session
@@ -66,6 +66,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(admin.router, prefix="/admin", tags=["admin"])
 app.include_router(documents.router, prefix="/documents", tags=["documents"])
 app.include_router(meetings.router, prefix="/meetings", tags=["meetings"])
 app.include_router(speeches.router, prefix="/speeches", tags=["speeches"])
@@ -79,14 +80,15 @@ def init_db():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
-        if not db.query(User).first():
-            admin = User(
-                email="admin@aria.gov.in",
+        if not db.query(User).filter(User.username == "admin").first():
+            admin_user = User(
+                username="admin",
                 hashed_password=hash_password("aria2026"),
                 role="admin",
+                clearance_level=4,
                 name="System Admin"
             )
-            db.add(admin)
+            db.add(admin_user)
             db.commit()
     finally:
         db.close()
