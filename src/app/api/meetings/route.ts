@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
+import { openai } from '../../../lib/openai';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -22,10 +23,7 @@ export async function POST(req: Request) {
 
         // Try to generate transcript only if OpenAI is available
         try {
-            if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim() !== '') {
-                // Import here to avoid issues if key is missing
-                const { openai } = await import('../../../lib/openai');
-                
+            if (openai) {
                 // Create a temporary file path for the audio
                 const tempFileName = `audio_${Date.now()}_${Math.random().toString(36).substring(7)}`;
                 

@@ -23,7 +23,7 @@ export async function POST(req: Request) {
             text = buffer.toString('utf-8');
         }
 
-        if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.trim() === '') {
+        if (!openai) {
             return NextResponse.json({
                 summary: `[MOCK SUMMARY] The uploaded document (${file.name}) contains ${text.length} characters of text. This is a mock response because OPENAI_API_KEY is not configured in the environment. ` + text.substring(0, 100).replace(/\n/g, ' ') + "...",
                 key_decisions: "- Mock decision: Proceed with local testing\n- Mock decision: Configure API key for real intelligence",
