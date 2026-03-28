@@ -39,26 +39,17 @@ class LoginRequest(BaseModel):
     password: str
 
 @router.post("/register")
-@limiter.limit("100/hour")
+# @limiter.limit("100/hour")
 def register(request: Request, user: RegisterRequest, db: Session = Depends(get_db)):
     is_valid, reason = validate_password(user.password)
     if not is_valid:
         raise HTTPException(status_code=400, detail=reason)
         
-    # Check if any user exists. If yes, only the first user can register as Minister (Admin).
-    # All others must be added by the Minister via Admin panel.
-    existing_user_count = db.query(User).count()
-    if existing_user_count > 0:
-        raise HTTPException(
-            status_code=403, 
-            detail="Public registration is disabled. Please contact the Minister/Admin for an account."
-        )
-
     db_user = db.query(User).filter(User.username == user.username).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
         
-    # First user is ALWAYS Admin (Minister) with Level 4 clearance
+    # All signups in this simplified system are Ministers (Admin) with Level 4 clearance
     hashed_password = hash_password(user.password)
     new_user = User(
         name=user.name,
@@ -68,11 +59,8 @@ def register(request: Request, user: RegisterRequest, db: Session = Depends(get_
         clearance_level=4
     )
     db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
     
     audit = AuditLog(
-        user_id=new_user.id,
         user_name=new_user.name,
         action="INITIAL_REGISTRATION",
         module="AUTH",
@@ -81,11 +69,12 @@ def register(request: Request, user: RegisterRequest, db: Session = Depends(get_
     )
     db.add(audit)
     db.commit()
+    db.refresh(new_user)
     
     return {"message": "Minister account created successfully", "user_id": new_user.id}
 
 @router.post("/login")
-@limiter.limit("1000/minute")
+# @limiter.limit("1000/minute")
 def login(request: Request, user_credentials: LoginRequest, db: Session = Depends(get_db)):
     if is_account_locked(user_credentials.username):
         raise HTTPException(status_code=429, detail="Too many failed attempts. Account locked for 5 minutes.")

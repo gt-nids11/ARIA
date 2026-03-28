@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
 function isTokenExpired(token: string): boolean {
     try {
@@ -73,7 +73,7 @@ async function apiCall(url: string, options: any = {}, isFormData = false) {
 export const auth = {
     login: async (username: string, password: string) => {
         // We use standard fetch here because apiCall requires a valid token
-        const res = await fetch(`${BASE_URL}/auth/login`, {
+        const res = await fetch(`${BASE_URL}/api/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password })
@@ -98,7 +98,7 @@ export const auth = {
     },
     register: async (name: string, username: string, password: string, role: string) => {
         // Register doesn't strictly need auth but following pattern
-        const res = await fetch(`${BASE_URL}/auth/register`, {
+        const res = await fetch(`${BASE_URL}/api/auth/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name, username, password, role })
@@ -114,7 +114,7 @@ export const auth = {
     },
     logout: async () => {
         try {
-            await apiCall('/auth/logout', { method: 'POST' });
+            await apiCall('/api/auth/logout', { method: 'POST' });
         } finally {
             if (typeof window !== "undefined") {
                 localStorage.clear();
@@ -128,11 +128,11 @@ export const documents = {
     upload: async (file: File) => {
         const formData = new FormData();
         formData.append("file", file);
-        return apiCall("/documents/upload", {
+        return apiCall("/api/documents/upload", {
             method: "POST", body: formData
         }, true);
     },
-    list: async () => apiCall("/documents"),
+    list: async () => apiCall("/api/documents"),
     query: async (question: string) => apiCall("/documents/query", {
         method: "POST", body: JSON.stringify({ question })
     })
@@ -142,15 +142,15 @@ export const meetings = {
     upload: async (file: File) => {
         const formData = new FormData();
         formData.append("file", file);
-        return apiCall("/meetings/upload", {
+        return apiCall("/api/meetings/upload", {
             method: "POST", body: formData
         }, true);
     },
-    list: async () => apiCall("/meetings")
+    list: async () => apiCall("/api/meetings")
 };
 
 export const speeches = {
-    draft: async (data: any) => apiCall("/speeches/draft", {
+    draft: async (data: any) => apiCall("/api/speeches/draft", {
         method: "POST", body: JSON.stringify(data)
     })
 };
@@ -158,45 +158,45 @@ export const speeches = {
 export const complaints = {
     list: async (filters: any = {}) => {
         const q = new URLSearchParams(filters).toString();
-        return apiCall(`/complaints${q ? '?'+q : ''}`);
+        return apiCall(`/api/complaints${q ? '?'+q : ''}`);
     },
-    heatmap: async () => apiCall("/complaints/heatmap"),
-    create: async (data: any) => apiCall("/complaints", {
+    heatmap: async () => apiCall("/api/complaints/heatmap"),
+    create: async (data: any) => apiCall("/api/complaints", {
         method: "POST", body: JSON.stringify(data)
     }),
-    stats: async () => apiCall("/complaints/stats")
+    stats: async () => apiCall("/api/complaints/stats")
 };
 
 export const alerts = {
     list: async (filters: any = {}) => {
         const q = new URLSearchParams(filters).toString();
-        return apiCall(`/alerts${q ? '?'+q : ''}`);
+        return apiCall(`/api/alerts${q ? '?'+q : ''}`);
     },
-    resolve: async (id: number) => apiCall(`/alerts/${id}/resolve`, {
+    resolve: async (id: number) => apiCall(`/api/alerts/${id}/resolve`, {
         method: "PATCH"
     })
 };
 
 export const schedule = {
-    list: async (date?: string) => apiCall(`/schedule${date ? '?date='+date : ''}`),
-    create: async (data: any) => apiCall("/schedule", {
+    list: async (date?: string) => apiCall(`/api/schedule${date ? '?date='+date : ''}`),
+    create: async (data: any) => apiCall("/api/schedule", {
         method: "POST", body: JSON.stringify(data)
     }),
-    getBriefing: async (id: number) => apiCall(`/schedule/${id}/briefing`)
+    getBriefing: async (id: number) => apiCall(`/api/schedule/${id}/briefing`)
 };
 
 export const dashboard = {
-    getBrief: async () => apiCall("/dashboard/brief"),
-    getStats: async () => apiCall("/dashboard/stats")
+    getBrief: async () => apiCall("/api/dashboard/brief"),
+    getStats: async () => apiCall("/api/dashboard/stats")
 };
 
 export const audit = {
     list: async (filters: any = {}) => {
         const q = new URLSearchParams(filters).toString();
-        return apiCall(`/audit${q ? '?'+q : ''}`);
+        return apiCall(`/api/audit${q ? '?'+q : ''}`);
     },
     export: async () => {
-        const blob = await apiCall("/audit/export");
+        const blob = await apiCall("/api/audit/export");
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;

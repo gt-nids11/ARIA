@@ -15,7 +15,7 @@ from app.core.config import settings
 pwd_context = CryptContext(
     schemes=["bcrypt"],
     deprecated="auto",
-    bcrypt__rounds=12
+    bcrypt__rounds=8
 )
 
 token_blacklist = set()

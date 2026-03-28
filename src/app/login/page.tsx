@@ -55,8 +55,8 @@ export default function LoginPage() {
         setIsRegLoading(true);
 
         try {
-            await authApi.register(regName, regUser, regPass, 'viewer');
-            setSuccess('REGISTRATION SUCCESSFUL. LEVEL-1 CLEARANCE GRANTED. YOU MAY NOW AUTHORIZE ACCESS.');
+            await authApi.register(regName, regUser, regPass, 'admin');
+            setSuccess('MINISTER REGISTRATION SUCCESSFUL. ACCESS AUTHORIZED. YOU MAY NOW LOGIN.');
             setLoginUser(regUser);
             setRegName('');
             setRegUser('');
@@ -147,51 +147,51 @@ export default function LoginPage() {
                 </div>
 
                 {/* Signup Section */}
-                <div className="glass-card p-10 space-y-8 border-t-4 border-t-emerald-500 shadow-2xl relative overflow-hidden">
+                <div className="glass-card p-10 space-y-8 border-t-4 border-t-blue-500 shadow-2xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
                         <UserPlus className="w-32 h-32 text-white" />
                     </div>
 
                     <div>
                         <h2 className="text-2xl font-black text-white tracking-tight uppercase flex items-center">
-                            <UserPlus className="w-6 h-6 mr-3 text-emerald-500" /> Accounts Registry
+                            <UserPlus className="w-6 h-6 mr-3 text-blue-500" /> Minister Registry
                         </h2>
-                        <p className="text-navy-400 text-xs font-bold uppercase tracking-widest mt-1">New Personnel Enrollment</p>
+                        <p className="text-navy-400 text-xs font-bold uppercase tracking-widest mt-1">New Minister Enrollment</p>
                     </div>
 
                     <form onSubmit={handleRegister} className="space-y-6">
                         <div className="space-y-4">
                             <div className="relative group">
-                                <Info className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500 group-focus-within:text-emerald-500 transition-colors" />
+                                <Info className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500 group-focus-within:text-blue-500 transition-colors" />
                                 <input
                                     type="text"
                                     required
                                     value={regName}
                                     onChange={(e) => setRegName(e.target.value)}
-                                    className="w-full bg-navy-900/50 border border-navy-700/50 rounded-2xl p-4 pl-12 text-sm text-white placeholder:text-navy-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all shadow-inner"
+                                    className="w-full bg-navy-900/50 border border-navy-700/50 rounded-2xl p-4 pl-12 text-sm text-white placeholder:text-navy-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all shadow-inner"
                                     placeholder="Full Name"
                                 />
                             </div>
                             <div className="relative group">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500 group-focus-within:text-emerald-500 transition-colors" />
+                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500 group-focus-within:text-blue-500 transition-colors" />
                                 <input
                                     type="text"
                                     required
                                     value={regUser}
                                     onChange={(e) => setRegUser(e.target.value)}
-                                    className="w-full bg-navy-900/50 border border-navy-700/50 rounded-2xl p-4 pl-12 text-sm text-white placeholder:text-navy-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all shadow-inner"
+                                    className="w-full bg-navy-900/50 border border-navy-700/50 rounded-2xl p-4 pl-12 text-sm text-white placeholder:text-navy-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all shadow-inner"
                                     placeholder="New Username"
                                 />
                             </div>
                             <div className="relative group">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500 group-focus-within:text-emerald-500 transition-colors" />
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500 group-focus-within:text-blue-500 transition-colors" />
                                 <input
                                     type="password"
                                     required
                                     value={regPass}
                                     onChange={(e) => setRegPass(e.target.value)}
-                                    className="w-full bg-navy-900/50 border border-navy-700/50 rounded-2xl p-4 pl-12 text-sm text-white placeholder:text-navy-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all shadow-inner"
-                                    placeholder="Set Clearance Pass"
+                                    className="w-full bg-navy-900/50 border border-navy-700/50 rounded-2xl p-4 pl-12 text-sm text-white placeholder:text-navy-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all shadow-inner"
+                                    placeholder="Set Access Key"
                                 />
                             </div>
                         </div>
@@ -199,7 +199,7 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={isRegLoading}
-                            className="w-full py-4 px-6 bg-gradient-to-r from-emerald-700 to-emerald-500 hover:from-emerald-600 hover:to-emerald-400 text-white font-black rounded-2xl transition-all shadow-lg hover:shadow-emerald-500/25 flex items-center justify-center uppercase tracking-widest border-t border-emerald-400/30 active:scale-[0.98]"
+                            className="w-full py-4 px-6 bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-600 hover:to-blue-400 text-white font-black rounded-2xl transition-all shadow-lg hover:shadow-blue-500/25 flex items-center justify-center uppercase tracking-widest border-t border-blue-400/30 active:scale-[0.98]"
                         >
                             {isRegLoading ? (
                                 <Loader2 className="w-5 h-5 animate-spin" />

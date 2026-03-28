@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.document import Document
-from app.core.dependencies import get_current_user, require_leader_or_admin
+from app.core.dependencies import get_current_user, require_leader_or_admin, require_clearance
 from app.models.user import User
 from app.models.audit import AuditLog
 from app.services.openai_service import summarize_document

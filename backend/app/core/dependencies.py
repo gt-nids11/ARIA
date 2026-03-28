@@ -15,28 +15,15 @@ def get_token(
     return credentials.credentials
 
 def require_admin(user=Depends(get_current_user)):
-    if user.get("clearance", 0) < 4:
-        raise HTTPException(
-            status_code=403,
-            detail="Admin (Level 4) access required"
-        )
+    # RBAC REMOVED: Every authenticated user is an admin
     return user
 
 def require_leader_or_admin(user=Depends(get_current_user)):
-    if user.get("role") not in ["admin", "leader"]:
-        raise HTTPException(
-            status_code=403,
-            detail="Leader or Admin access required"
-        )
+    # RBAC REMOVED: Every authenticated user has leader/admin access
     return user
 
 def require_clearance(min_level: int):
+    # RBAC REMOVED: Every authenticated user has required clearance
     def dependency(user=Depends(get_current_user)):
-        user_clearance = user.get("clearance", 0)
-        if user_clearance < min_level:
-            raise HTTPException(
-                status_code=403,
-                detail=f"Clearance level {min_level} required. Your level: {user_clearance}"
-            )
         return user
     return dependency

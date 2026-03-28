@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.complaint import Complaint
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, require_clearance
 from app.models.user import User
 from app.models.audit import AuditLog
 from pydantic import BaseModel, validator

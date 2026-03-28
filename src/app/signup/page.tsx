@@ -19,8 +19,8 @@ export default function SignupPage() {
         setLoading(true);
 
         try {
-            await authApi.register(name, username, password, 'viewer');
-            alert('Personnel account created. Level-1 Viewer clearance granted by default. Please login.');
+            await authApi.register(name, username, password, 'admin');
+            alert('Minister account created successfully. Please log in with your credentials.');
             router.push('/login');
         } catch (err: any) {
             setError(err.message || 'Registration failed');
@@ -30,16 +30,16 @@ export default function SignupPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-navy-950 px-4 relative overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center bg-navy-950 px-4 relative overflow-hidden text-slate-100">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.05)_0%,transparent_70%)]"></div>
             
-            <div className="max-w-md w-full glass-card p-10 space-y-8 relative border-t-4 border-t-emerald-500 shadow-2xl">
+            <div className="max-w-md w-full glass-card p-10 space-y-8 relative border-t-4 border-t-blue-500 shadow-2xl">
                 <div className="text-center">
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-emerald-600/10 mb-6 border border-emerald-500/20 shadow-inner">
-                        <UserPlus className="w-10 h-10 text-emerald-500" />
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-blue-600/10 mb-6 border border-blue-500/20 shadow-inner">
+                        <Shield className="w-10 h-10 text-blue-500" />
                     </div>
-                    <h2 className="text-3xl font-black text-white tracking-tight uppercase">Registry Entry</h2>
-                    <p className="mt-2 text-navy-400 font-medium tracking-wide">Register new personnel in the ARIA database</p>
+                    <h2 className="text-3xl font-black tracking-tight uppercase">Minister Registry</h2>
+                    <p className="mt-2 text-navy-400 font-medium tracking-wide">Enter your credentials for governance access</p>
                 </div>
 
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -51,58 +51,44 @@ export default function SignupPage() {
                     
                     <div className="space-y-4">
                         <div className="relative group">
-                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500 group-focus-within:text-emerald-500 transition-colors" />
+                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500 group-focus-within:text-blue-500 transition-colors" />
                             <input
                                 type="text"
                                 required
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="w-full bg-navy-900 border border-navy-700 rounded-2xl p-4 pl-12 text-sm text-white placeholder:text-navy-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all shadow-inner"
-                                placeholder="Full Personnel Name"
+                                className="w-full bg-navy-900 border border-navy-700 rounded-2xl p-4 pl-12 text-sm text-white placeholder:text-navy-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all shadow-inner"
+                                placeholder="Full Minister Name"
                             />
                         </div>
                         <div className="relative group">
-                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500 group-focus-within:text-emerald-500 transition-colors" />
+                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500 group-focus-within:text-blue-500 transition-colors" />
                             <input
                                 type="text"
                                 required
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                className="w-full bg-navy-900/50 border border-navy-700/50 rounded-2xl p-4 pl-12 text-sm text-white placeholder:text-navy-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all shadow-inner"
-                                placeholder="Personnel Username"
+                                className="w-full bg-navy-900/50 border border-navy-700/50 rounded-2xl p-4 pl-12 text-sm text-white placeholder:text-navy-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all shadow-inner"
+                                placeholder="Minister Username"
                             />
                         </div>
                         <div className="relative group">
-                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500 group-focus-within:text-emerald-500 transition-colors" />
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500 group-focus-within:text-blue-500 transition-colors" />
                             <input
                                 type="password"
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-navy-900 border border-navy-700 rounded-2xl p-4 pl-12 text-sm text-white placeholder:text-navy-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all shadow-inner"
+                                className="w-full bg-navy-900 border border-navy-700 rounded-2xl p-4 pl-12 text-sm text-white placeholder:text-navy-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all shadow-inner"
                                 placeholder="Clearance Password"
                             />
-                        </div>
-                    </div>
-
-                    <div className="p-4 bg-navy-900/50 rounded-xl border border-white/5 space-y-2">
-                        <div className="flex items-center text-[10px] text-navy-400 font-bold uppercase tracking-wider">
-                            <Shield className="w-3 h-3 mr-2 text-emerald-500" /> Automatic Assignment
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-xs text-navy-200">Starting Role</span>
-                            <span className="text-xs font-black text-emerald-400 uppercase tracking-widest">Viewer</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-xs text-navy-200">Default Clearance</span>
-                            <span className="text-xs font-black text-emerald-400 tracking-widest">LEVEL 1</span>
                         </div>
                     </div>
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-4 px-6 bg-gradient-to-r from-emerald-700 to-emerald-500 hover:from-emerald-600 hover:to-emerald-400 text-white font-black rounded-2xl transition-all shadow-lg hover:shadow-emerald-500/25 flex items-center justify-center uppercase tracking_widest border-t border-emerald-400/30"
+                        className="w-full py-4 px-6 bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-600 hover:to-blue-400 text-white font-black rounded-2xl transition-all shadow-lg hover:shadow-blue-500/25 flex items-center justify-center uppercase tracking_widest border-t border-blue-400/30"
                     >
                         {loading ? (
                             <Loader2 className="w-5 h-5 animate-spin" />

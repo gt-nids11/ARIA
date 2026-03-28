@@ -9,14 +9,10 @@ mongodb: Optional[AsyncIOMotorDatabase] = None
 async def connect_to_mongo():
     """Connect to MongoDB on startup"""
     global mongodb_client, mongodb
-    mongodb_client = AsyncIOMotorClient(settings.MONGODB_URL)
+    # Initialize MongoDB client without potentially blocking ping
+    mongodb_client = AsyncIOMotorClient(settings.MONGODB_URL, serverSelectionTimeoutMS=2000)
     mongodb = mongodb_client[settings.MONGODB_DB_NAME]
-    try:
-        # Verify connection by pinging the server
-        await mongodb_client.admin.command('ping')
-        print("Success: Connected to MongoDB")
-    except Exception as e:
-        print(f"Warning: Failed to connect to MongoDB. Is it running? {e}")
+    print("Info: MongoDB client initialized")
 
 async def close_mongo_connection():
     """Close MongoDB connection on shutdown"""
