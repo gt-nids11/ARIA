@@ -45,17 +45,27 @@ def register(request: Request, user: RegisterRequest, db: Session = Depends(get_
     if not is_valid:
         raise HTTPException(status_code=400, detail=reason)
         
+    # Check if any user exists. If yes, only the first user can register as Minister (Admin).
+    # All others must be added by the Minister via Admin panel.
+    existing_user_count = db.query(User).count()
+    if existing_user_count > 0:
+        raise HTTPException(
+            status_code=403, 
+            detail="Public registration is disabled. Please contact the Minister/Admin for an account."
+        )
+
     db_user = db.query(User).filter(User.username == user.username).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
         
+    # First user is ALWAYS Admin (Minister) with Level 4 clearance
     hashed_password = hash_password(user.password)
     new_user = User(
         name=user.name,
         username=user.username,
         hashed_password=hashed_password,
-        role=user.role,
-        clearance_level=1
+        role=UserRole.ADMIN,
+        clearance_level=4
     )
     db.add(new_user)
     db.commit()
@@ -64,15 +74,15 @@ def register(request: Request, user: RegisterRequest, db: Session = Depends(get_
     audit = AuditLog(
         user_id=new_user.id,
         user_name=new_user.name,
-        action="REGISTER",
+        action="INITIAL_REGISTRATION",
         module="AUTH",
-        details=f"New user: {user.username}",
+        details=f"Minister account created: {user.username}",
         ip_address=request.client.host if request.client else "Unknown"
     )
     db.add(audit)
     db.commit()
     
-    return {"message": "Account created successfully", "user_id": new_user.id}
+    return {"message": "Minister account created successfully", "user_id": new_user.id}
 
 @router.post("/login")
 @limiter.limit("1000/minute")

@@ -204,3 +204,12 @@ export const audit = {
         a.click();
     }
 };
+export const admin = {
+    listUsers: async () => apiCall("/admin/users"),
+    createUser: async (data: any) => apiCall("/admin/users", {
+        method: "POST", body: JSON.stringify(data)
+    }),
+    updateRole: async (userId: number, role: string, level: number) => apiCall(`/admin/users/${userId}/role`, {
+        method: "PATCH", body: JSON.stringify({ role, clearance_level: level })
+    })
+};

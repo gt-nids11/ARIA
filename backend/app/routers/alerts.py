@@ -24,7 +24,7 @@ def list_alerts(severity: Optional[str] = None, resolved: Optional[bool] = None,
     return q.order_by(Alert.resolved.asc(), Alert.created_at.desc()).all()
 
 @router.post("")
-def create_a(req: AlertCreate, db: Session = Depends(get_db), current_user: dict = Depends(require_leader_or_admin)):
+def create_a(req: AlertCreate, db: Session = Depends(get_db), current_user: dict = Depends(require_clearance(3))):
     a = Alert(title=req.title, description=req.description, severity=req.severity, suggested_action=req.suggested_action)
     db.add(a)
     db.commit()

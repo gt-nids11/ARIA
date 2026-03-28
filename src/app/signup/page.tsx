@@ -2,11 +2,12 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { UserPlus, Shield, Lock, Mail, User, Loader2 } from 'lucide-react';
+import { UserPlus, Shield, Lock, Mail, User, Loader2, Info } from 'lucide-react';
+import { auth as authApi } from '@/lib/api';
 
 export default function SignupPage() {
     const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -18,22 +19,11 @@ export default function SignupPage() {
         setLoading(true);
 
         try {
-            const res = await fetch('/api/auth/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password }),
-            });
-
-            const data = await res.json();
-
-            if (res.ok) {
-                alert('Personnel account created. Level-1 Viewer clearance granted by default. Please login.');
-                router.push('/login');
-            } else {
-                setError(data.detail || 'Registration failed');
-            }
-        } catch (err) {
-            setError('Connection to security server failed');
+            await authApi.register(name, username, password, 'viewer');
+            alert('Personnel account created. Level-1 Viewer clearance granted by default. Please login.');
+            router.push('/login');
+        } catch (err: any) {
+            setError(err.message || 'Registration failed');
         } finally {
             setLoading(false);
         }
@@ -72,14 +62,14 @@ export default function SignupPage() {
                             />
                         </div>
                         <div className="relative group">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500 group-focus-within:text-emerald-500 transition-colors" />
+                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy-500 group-focus-within:text-emerald-500 transition-colors" />
                             <input
-                                type="email"
+                                type="text"
                                 required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full bg-navy-900 border border-navy-700 rounded-2xl p-4 pl-12 text-sm text-white placeholder:text-navy-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all shadow-inner"
-                                placeholder="government@email.gov.in"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                className="w-full bg-navy-900/50 border border-navy-700/50 rounded-2xl p-4 pl-12 text-sm text-white placeholder:text-navy-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all shadow-inner"
+                                placeholder="Personnel Username"
                             />
                         </div>
                         <div className="relative group">

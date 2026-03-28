@@ -88,7 +88,7 @@ def heatmap(db: Session = Depends(get_db)):
     return [{"lat": c.latitude, "lng": c.longitude, "ward": c.ward, "category": c.category, "priority": c.priority, "title": c.title, "days_open": (c.created_at.date().toordinal() - c.created_at.date().toordinal())} for c in comps]
 
 @router.patch("/{id}")
-def update_comp(id: int, req: ComplaintUpdate, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+def update_comp(id: int, req: ComplaintUpdate, db: Session = Depends(get_db), current_user: dict = Depends(require_clearance(2))):
     comp = db.query(Complaint).filter(Complaint.id == id).first()
     comp.status = req.status
     db.commit()

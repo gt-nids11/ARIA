@@ -92,7 +92,7 @@ def get_document(id: int, db: Session = Depends(get_db)):
     return doc
 
 @router.delete("/{id}")
-def delete_document(id: int, db: Session = Depends(get_db), current_user: dict = Depends(require_leader_or_admin)):
+def delete_document(id: int, db: Session = Depends(get_db), current_user: dict = Depends(require_clearance(3))):
     doc = db.query(Document).filter(Document.id == id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
