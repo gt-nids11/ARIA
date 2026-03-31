@@ -146,7 +146,10 @@ export const meetings = {
             method: "POST", body: formData
         }, true);
     },
-    list: async () => apiCall("/api/meetings")
+    list: async () => apiCall("/api/meetings"),
+    delete: async (id: number | string) => apiCall(`/api/meetings/${id}`, {
+        method: "DELETE"
+    })
 };
 
 export const speeches = {
@@ -205,11 +208,11 @@ export const audit = {
     }
 };
 export const admin = {
-    listUsers: async () => apiCall("/admin/users"),
-    createUser: async (data: any) => apiCall("/admin/users", {
+    listUsers: async () => apiCall("/api/admin/users"),
+    createUser: async (data: any) => apiCall("/api/admin/users", {
         method: "POST", body: JSON.stringify(data)
     }),
-    updateRole: async (userId: number, role: string, level: number) => apiCall(`/admin/users/${userId}/role`, {
+    updateRole: async (userId: number, role: string, level: number) => apiCall(`/api/admin/users/${userId}/role`, {
         method: "PATCH", body: JSON.stringify({ role, clearance_level: level })
     })
 };

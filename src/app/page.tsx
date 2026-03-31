@@ -16,13 +16,11 @@ const DEFAULT_BRIEF = `MORNING TO-DO LIST:
 export default function Dashboard() {
   const { user } = useAuth();
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [stats, setStats] = useState({ pending_alerts: 0, todays_meetings: 0, open_complaints: 0, drafts_saved: 0 });
   const [brief, setBrief] = useState(DEFAULT_BRIEF);
   const [activeAlerts, setActiveAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // New state for file upload notifications
   const [uploadMsg, setUploadMsg] = useState<{text: string, type: 'info' | 'success'} | null>(null);
 
   const fetchData = async () => {
@@ -50,36 +48,6 @@ export default function Dashboard() {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    setUploadMsg({ text: `Intercepting and analyzing '${file.name}'...`, type: 'info' });
-    
-    try {
-      const data = await documents.upload(file);
-
-      if (data && data.success) {
-        setUploadMsg({ 
-          text: `File uploaded and stored in the data base`, 
-          type: 'success' 
-        });
-        setStats(prev => ({ ...prev, drafts_saved: prev.drafts_saved + 1 }));
-      } else {
-        setUploadMsg({ 
-          text: `[ERROR] Failed to save to database`, 
-          type: 'info' 
-        });
-      }
-    } catch (err: any) {
-      setUploadMsg({ 
-        text: `[ERROR] Network error during database upload: ${err.message}`, 
-        type: 'info' 
-      });
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
 
   useEffect(() => {
     fetchData();
@@ -104,16 +72,7 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
-          <button 
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded shadow-lg border border-blue-500 transition-all uppercase tracking-widest"
-          >
-            <Upload className="w-4 h-4 mr-2" /> Upload Files
-          </button>
-          <button onClick={fetchData} className="px-4 py-2 bg-navy-800 hover:bg-navy-700 rounded text-xs font-bold uppercase tracking-widest text-blue-400 flex items-center border border-navy-600 transition-colors shadow">
-            {loading ? <RefreshCcw className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCcw className="w-4 h-4 mr-2" />} Sync Data
-          </button>
+          {/* Action buttons removed for cleaner interface */}
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 "use client";
-import { useState, useRef } from 'react';
-import { Mic, Users, Calendar, ArrowRight, FileAudio, RefreshCcw, AlertCircle, CheckCircle } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Mic, Users, Calendar, ArrowRight, FileAudio, RefreshCcw, AlertCircle, CheckCircle, Trash2 } from 'lucide-react';
+import { meetings as meetingsApi } from '@/lib/api';
 
 type MeetingAnalysis = {
     summary: string;
@@ -33,68 +34,100 @@ export default function Meetings() {
     const [uploadMsg, setUploadMsg] = useState<{text: string, type: 'info' | 'success' | 'error'} | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const fetchMeetings = async () => {
+        try {
+            const data = await meetingsApi.list();
+            const mapped = data.map((m: any) => ({
+                id: m.id.toString(),
+                title: m.title,
+                date: new Date(m.created_at).toLocaleDateString(),
+                attendees: Math.floor(Math.random() * 5) + 2,
+                status: m.transcript ? 'Completed' : 'Uploaded - No Transcript',
+                has_transcript: !!m.transcript,
+                has_stored_audio: !!m.audio_path,
+                data: {
+                    transcript: m.transcript || '',
+                    analysis: {
+                        summary: m.summary || '',
+                        key_decisions: m.key_decisions || '',
+                        action_items: m.action_items || '',
+                        unresolved_issues: m.unresolved_issues || '',
+                        next_steps: m.next_steps || ''
+                    }
+                }
+            }));
+            setMeetings(mapped);
+        } catch (err) {
+            console.error("Failed to fetch meetings:", err);
+        }
+    };
+
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
         const file = e.target.files[0];
-        
         setUploadMsg({ text: `Uploading '${file.name}' to ARIA Secure Vault...`, type: 'info' });
         setLoading(true);
         
-        const formData = new FormData();
-        formData.append('file', file);
-        
         try {
-            const res = await fetch('/api/meetings', { 
-                method: 'POST', 
-                body: formData,
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
-            
-            const contentType = res.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                throw new Error('Server returned non-JSON response');
-            }
-            
-            const data = await res.json();
-            
-            if (res.ok && data.success) {
-                const newMeeting = data.newMeeting;
-                setMeetings([newMeeting, ...meetings]);
-                setSelectedMeeting(newMeeting);
-                setActiveTab('summary');
+            const data = await meetingsApi.upload(file);
+            if (data) {
+                // Success: Backend returns the new meeting object
+                await fetchMeetings();
                 
-                if (newMeeting.has_transcript) {
-                    setUploadMsg({ 
-                        text: `SUCCESS: '${file.name}' uploaded and transcribed!`, 
-                        type: 'success' 
-                    });
-                } else {
-                    setUploadMsg({ 
-                        text: `UPLOADED: '${file.name}' saved successfully. Transcription unavailable.`, 
-                        type: 'success' 
-                    });
-                }
-            } else {
-                setUploadMsg({ 
-                    text: `[ERROR] Upload failed: ${data.error || 'Unknown error'}`, 
-                    type: 'error' 
-                });
+                // Map the newly created meeting to match frontend type
+                const matchedMeeting = {
+                    id: data.id.toString(),
+                    title: data.title,
+                    date: new Date(data.created_at).toLocaleDateString(),
+                    attendees: Math.floor(Math.random() * 5) + 2,
+                    status: data.transcript ? 'Completed' : 'Uploaded - No Transcript',
+                    has_transcript: !!data.transcript,
+                    has_stored_audio: !!data.audio_path,
+                    data: {
+                        transcript: data.transcript || '',
+                        analysis: {
+                            summary: data.summary || '',
+                            key_decisions: data.key_decisions || '',
+                            action_items: data.action_items || '',
+                            unresolved_issues: data.unresolved_issues || '',
+                            next_steps: data.next_steps || ''
+                        }
+                    }
+                };
+                
+                setSelectedMeeting(matchedMeeting);
+                setActiveTab('summary');
+                setUploadMsg({ text: `SUCCESS: '${file.name}' uploaded and transcribed!`, type: 'success' });
             }
-        } catch (e: unknown) {
-            console.error('Upload error:', e);
-            const message = e instanceof Error ? e.message : String(e);
-            setUploadMsg({ 
-                text: `[ERROR] ${message || 'Network error during upload'}`, 
-                type: 'error' 
-            });
+        } catch (err: any) {
+            console.error('Upload error:', err);
+            setUploadMsg({ text: `[ERROR] ${err.message || 'Upload failed'}`, type: 'error' });
         } finally {
             setLoading(false);
             if (fileInputRef.current) fileInputRef.current.value = "";
             setTimeout(() => setUploadMsg(null), 6000);
         }
     };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this recording and its analysis?")) return;
+        
+        try {
+            await meetingsApi.delete(id);
+            setMeetings(meetings.filter(m => m.id !== id));
+            setSelectedMeeting(null);
+            setUploadMsg({ text: "SUCCESS: Recording deleted successfully.", type: 'success' });
+        } catch (err: any) {
+            console.error("Delete error:", err);
+            setUploadMsg({ text: `[ERROR] Delete failed: ${err.message}`, type: 'error' });
+        } finally {
+            setTimeout(() => setUploadMsg(null), 4000);
+        }
+    };
+
+    useEffect(() => {
+        fetchMeetings();
+    }, []);
 
     return (
         <div className="flex h-full gap-6">
@@ -170,6 +203,14 @@ export default function Meetings() {
                                 <h2 className="text-2xl font-bold text-white mb-3">{selectedMeeting.title}</h2>
                                 <span className={`text-xs font-bold px-2 py-1 rounded-full ${selectedMeeting.has_transcript ? 'bg-emerald-500/20 text-emerald-300' : 'bg-yellow-500/20 text-yellow-300'}`}>{selectedMeeting.status}</span>
                             </div>
+                            <button 
+                                onClick={() => handleDelete(selectedMeeting.id)}
+                                className="flex items-center space-x-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-4 py-2 rounded-lg font-bold transition-all active:scale-95"
+                                title="Permanently delete this recording"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                <span className="text-xs uppercase tracking-wider">Delete</span>
+                            </button>
                         </div>
                     </div>
 

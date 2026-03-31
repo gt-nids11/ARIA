@@ -68,3 +68,31 @@ def get_meeting(id: int, db: Session = Depends(get_db)):
     if not m:
         raise HTTPException(status_code=404, detail="Not found")
     return m
+
+@router.delete("/{id}")
+def delete_meeting(id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    m = db.query(Meeting).filter(Meeting.id == id).first()
+    if not m:
+        raise HTTPException(status_code=404, detail="Not found")
+    
+    # Delete physical file if it exists
+    if m.audio_path and os.path.exists(m.audio_path):
+        try:
+            os.remove(m.audio_path)
+        except Exception as e:
+            print(f"Error deleting file: {e}")
+            
+    db.delete(m)
+    db.commit()
+    
+    audit = AuditLog(
+        user_id=int(current_user.get("sub", 0)), 
+        user_name=current_user.get("name", "Unknown"), 
+        action="DELETE_MEETING", 
+        module="Meetings", 
+        details=f"Deleted meeting {m.title} (ID: {id})"
+    )
+    db.add(audit)
+    db.commit()
+    
+    return {"success": True}

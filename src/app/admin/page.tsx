@@ -40,11 +40,13 @@ export default function AdminPage() {
     const [newUser, setNewUser] = useState('');
     const [newPass, setNewPass] = useState('');
     const [newRole, setNewRole] = useState('viewer');
+    const [successMsg, setSuccessMsg] = useState('');
     const [isCreating, setIsCreating] = useState(false);
 
     const handleCreateUser = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsCreating(true);
+        setSuccessMsg('');
         try {
             await adminApi.createUser({
                 name: newName,
@@ -52,10 +54,12 @@ export default function AdminPage() {
                 password: newPass,
                 role: newRole
             });
+            setSuccessMsg(`Personnel '${newName}' enrolled successfully.`);
             setNewName('');
             setNewUser('');
             setNewPass('');
             await fetchUsers();
+            setTimeout(() => setSuccessMsg(''), 5000);
         } catch (err) {
             console.error(err);
             alert("Failed to create user: " + (err instanceof Error ? err.message : String(err)));
@@ -115,6 +119,13 @@ export default function AdminPage() {
                             </h2>
                             <p className="text-navy-400 text-[10px] font-bold uppercase tracking-widest mt-1">Add to ARIA Security Registry</p>
                         </div>
+
+                        {successMsg && (
+                            <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center space-x-3 animate-in fade-in slide-in-from-top-2">
+                                <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                                <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest">{successMsg}</p>
+                            </div>
+                        )}
 
                         <form onSubmit={handleCreateUser} className="space-y-4">
                             <div className="space-y-3">

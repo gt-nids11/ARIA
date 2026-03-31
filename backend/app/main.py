@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import auth, admin, documents, alerts, complaints
+from app.routers import auth, admin, documents, alerts, complaints, audit, meetings
 from app.database import Base, engine
 
 app = FastAPI(title="ARIA Backend API - MINIMAL")
@@ -25,6 +25,8 @@ app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(documents.router, prefix="/api/documents", tags=["documents"])
 app.include_router(alerts.router, prefix="/api/alerts", tags=["alerts"])
 app.include_router(complaints.router, prefix="/api/complaints", tags=["complaints"])
+app.include_router(audit.router, prefix="/api/audit", tags=["audit"])
+app.include_router(meetings.router, prefix="/api/meetings", tags=["meetings"])
 
 @app.on_event("startup")
 async def startup_event():
